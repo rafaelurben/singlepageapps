@@ -56,6 +56,10 @@
         window.addEventListener("load", () => {
             slowType("Hey, what are you doing here?", title);
         })
+
+        // Disable right click
+
+        document.addEventListener('contextmenu', event => event.preventDefault());
     
         // YouTube
 
