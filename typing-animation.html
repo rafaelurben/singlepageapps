@@ -57,9 +57,11 @@
             slowType("Hey, what are you doing here?", title);
         })
 
-        // Disable right click
+        // Disable right click and keyboard
 
-        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.onkeydown = e => e.preventDefault();
+        document.onkeypress = e => e.preventDefault();
     
         // YouTube
 
