@@ -24,10 +24,7 @@
         <h1 id="title"></h1>
         <p id="text"></p>
 
-        <iframe id="embed" width="1280" height="720" src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen>
-        </iframe>
+        <div id="player" style="display: none;"></div>
     </div>
 
     <script type="text/javascript">
@@ -49,6 +46,43 @@
         window.addEventListener("load", () => {
             slowType("Hey, what are you doing here?", title);
         })
+    
+        // YouTube
+
+        var tag = document.createElement('script');
+
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '390',
+                width: '640',
+                videoId: 'dQw4w9WgXcQ',
+                events: {
+                    'onReady': onPlayerReady,
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            setTimeout(startPlaying, 6000);
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING) {
+                // Player started playing
+            }
+        }
+
+        function startPlaying() {
+            player.playVideo();
+            document.getElementById("player").style.display = "inherit";
+        }
     </script>
+
 </body>
 </html>
