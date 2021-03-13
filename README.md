@@ -1,8 +1,8 @@
 # single-page-sites
 
-Just a little bit of testing... :)
+These are some little tests consisting of only one page. (Technically one html, one css and one js file to maintain easy readability.)
 
 Pages:
 
-- [Typing animation](https://rafaelurben.github.io/single-page-sites/typing-animation.html)
-- [Erbrechner CH (heritage calculator)](https://rafaelurben.github.io/single-page-sites/erbrechner.html)
+- [Typing animation](https://rafaelurben.github.io/single-page-sites/typing-animation/)
+- [Erbrechner CH (heritage calculator)](https://rafaelurben.github.io/single-page-sites/erbrechner/)
