@@ -3,10 +3,56 @@
 ///// Calculation
 
 class Person {
+    // Static fields
+
     static everyone = [];
+    static root = null;
     static money_to_state = false;
 
-    constructor(name, alive) {
+    // Static methods
+
+    static resetDistribution() {
+        for (let person of this.everyone) {
+            person.share_percent = 0;
+            person.share_absolute = 0;
+            person.min_share_percent = 0;
+            person.min_share_absolute = 0;
+        }
+    }
+
+    static distribute() {
+        this.resetDistribution();
+        if (this.root.partner && this.root.partner.alive) {
+            if (this.root.isParental1Alive) {
+                this.root.partner.share_percent = 1 / 2;
+                this.root.partner.min_share_percent = (1 / 2) * (1 / 2);
+
+                this.root.distributeToParental1(1 / 2, 3 / 4, true);
+            } else if (this.root.isParental2Alive) {
+                this.root.partner.share_percent = 3 / 4;
+                this.root.partner.min_share_percent = (3 / 4) * (1 / 2);
+
+                this.root.distributeToParental2(1 / 4, 1 / 2)
+            } else {
+                this.root.partner.share_percent = 1 / 1;
+                this.root.partner.min_share_percent = (1 / 1) * (1 / 2);
+            }
+        } else {
+            if (this.root.isParental1Alive) {
+                this.root.distributeToParental1(1 / 1, 1 / 2, true);
+            } else if (this.root.isParental2Alive) {
+                this.root.distributeToParental2(1 / 1);
+            } else if (this.root.isParental3Alive) {
+                this.root.distributeToParental3(1 / 1);
+            } else {
+                this.money_to_state = true;
+            }
+        }
+    }
+
+    // Constructor
+
+    constructor(name, alive, isroot=false) {
         this.name = String(name);
         this.alive = Boolean(alive);
 
@@ -23,6 +69,7 @@ class Person {
         this.min_share_absolute = 0;
 
         Person.everyone.push(this);
+        if (isroot) Person.root = this;
     }
 
     // Properties
@@ -131,42 +178,13 @@ class Person {
             this.parent2.distributeToParental2(percent, 0);
         }
     }
-
-    distribute() {
-        if (this.partner && this.partner.alive) {
-            if (this.isParental1Alive) {
-                this.partner.share_percent = 1/2;
-                this.partner.min_share_percent = (1/2)*(1/2);
-
-                this.distributeToParental1(1/2, 3/4, true);
-            } else if (this.isParental2Alive) {
-                this.partner.share_percent = 3/4;
-                this.partner.min_share_percent = (3/4)*(1/2);
-
-                this.distributeToParental2(1/4, 1/2)
-            } else {
-                this.partner.share_percent = 1/1;
-                this.partner.min_share_percent = (1/1)*(1/2);
-            }
-        } else {
-            if (this.isParental1Alive) {
-                this.distributeToParental1(1/1, 1/2, true);
-            } else if (this.isParental2Alive) {
-                this.distributeToParental2(1/1);
-            } else if (this.isParental3Alive) {
-                this.distributeToParental3(1/1);
-            } else {
-                Person.money_to_state = true;
-            }
-        }
-    }
 }
 
 ///// Interface
 
 ///// Tests
 
-// p = new Person("MAIN", false)
+// p = new Person("MAIN", false, true)
 // p.partner = new Person("Partner", false)
 
 // p.parent1 = new Person("Father", false)
@@ -181,4 +199,4 @@ class Person {
 // p.parent1.addChild(new Person("Sister 2", false))
 
 
-// p.distribute()
+// Person.distribute()
