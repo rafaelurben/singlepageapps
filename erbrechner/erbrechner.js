@@ -212,13 +212,14 @@ class Interface {
         }
     }
 
-    static calculate() {
+    static calculate(event=null) {
         Person.distribute();
         let value = parseInt(document.getElementById("valueinput").value);
         Person.calculateAbsoluteValues();
     }
 }
 
+document.getElementById("valueinput").oninput = Interface.calculate;
 document.onfullscreenchange = Interface.fullscreenChange;
 
 ///// Tests
