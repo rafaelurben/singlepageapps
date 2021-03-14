@@ -197,22 +197,14 @@ let app = document.getElementById("app");
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
-let menu_add = document.getElementById("menu_add");
-let menu_edit = document.getElementById("menu_edit");
+let menu_action = document.getElementById("menu_action");
+let menu_select = document.getElementById("menu_select");
 
 class Interface {
+    static selectedItem = null
+
     static fullscreen() {
         app.requestFullscreen();
-    }
-
-    static fullscreenChange(event) {
-        if (document.fullscreenElement != null) {
-            document.getElementById("fullscreen-open").style.display = "none";
-            document.getElementById("fullscreen-close").style.display = "block";
-        } else {
-            document.getElementById("fullscreen-open").style.display = "block";
-            document.getElementById("fullscreen-close").style.display = "none";
-        }
     }
 
     static calculate(event = null) {
@@ -223,11 +215,11 @@ class Interface {
 
     // Menus
 
-    static menu_setItems(menu, items) {
+    static _menu_setItems(menu, items) {
         menu.innerHTML = "";
         for (let item of items) {
             let elem = document.createElement(item.element || "a");
-            elem.innerText = item.title || "";
+            elem.innerText = item.text || "";
             elem.setAttribute("class", "dropdown-item");
             elem.setAttribute("href", "#");
 
@@ -239,10 +231,45 @@ class Interface {
         }
     }
 
+    static menu_updateSelectMenu() {
+        let items = [
+            { element: "strong", class: "dropdown-header", text: "Select a person" },
+        ];
+        for (let personid in Person.everyone) {
+            let person = Person.everyone[personid];
+            items.push({
+                text: `(${person.id.toString().padStart(2, "0")}) ${person.name}`,
+                onclick: `Interface.select(${person.id});`
+            })
+        }
+        this._menu_setItems(menu_select, items);
+    }
+
+    // Actions
+
+    static select(itemid) {
+        this.selectedItem = Person.everyone[itemid];
+        console.log("selected", this.selectedItem);
+    }
+
+    // Draw
+
+
+    // Events
+
+    static onfullscreenchange(event) {
+        if (document.fullscreenElement != null) {
+            document.getElementById("fullscreen-open").style.display = "none";
+            document.getElementById("fullscreen-close").style.display = "block";
+        } else {
+            document.getElementById("fullscreen-open").style.display = "block";
+            document.getElementById("fullscreen-close").style.display = "none";
+        }
+    }
 }
 
 document.getElementById("valueinput").oninput = Interface.calculate;
-document.onfullscreenchange = Interface.fullscreenChange;
+document.onfullscreenchange = Interface.onfullscreenchange;
 
 ///// Tests
 
@@ -265,9 +292,11 @@ Person.distribute()
 Interface.calculate()
 console.log(p)
 
-Interface.menu_setItems(menu_add, [
-    { title: "Item1", onclick: "console.log('item1');" },
-    { title: "Item2", onclick: "console.log('item2');" },
+Interface._menu_setItems(menu_action, [
+    { text: "Item1", onclick: "console.log('item1');" },
+    { text: "Item2", onclick: "console.log('item2');" },
     { element: "div", class: "dropdown-divider" },
-    { title: "Item3", onclick: "console.log('item3');" },
+    { text: "Item3", onclick: "console.log('item3');" },
 ])
+
+Interface.menu_updateSelectMenu()
