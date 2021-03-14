@@ -18,7 +18,7 @@ class Person {
             person.min_share_absolute = 0;
         }
     }
-    
+
     static calculateAbsoluteValues(amount) {
         for (let person of this.everyone) {
             person.share_absolute = person.share_percent * amount;
@@ -56,7 +56,7 @@ class Person {
 
     // Constructor
 
-    constructor(name, alive, isroot=false) {
+    constructor(name, alive, isroot = false) {
         this.id = Person.everyone.length;
         this.name = String(name);
         this.alive = Boolean(alive);
@@ -74,7 +74,7 @@ class Person {
 
         Person.everyone.push(this);
 
-        if (isroot) { 
+        if (isroot) {
             Person.root = this;
             this.partner = null;
             this.generation = 0;
@@ -118,12 +118,12 @@ class Person {
 
     // Methods
 
-    addChild(child, parent2=null) {
+    addChild(child, parent2 = null) {
         child.generation = this.generation + 1;
 
         this.children.push(child);
         child.setParent1(this);
-        
+
         if (parent2) {
             parent2.children.push(child);
             child.setParent2(this);
@@ -197,6 +197,9 @@ let app = document.getElementById("app");
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
+let menu_add = document.getElementById("menu_add");
+let menu_edit = document.getElementById("menu_edit");
+
 class Interface {
     static fullscreen() {
         app.requestFullscreen();
@@ -212,11 +215,30 @@ class Interface {
         }
     }
 
-    static calculate(event=null) {
+    static calculate(event = null) {
         Person.distribute();
         let value = parseInt(document.getElementById("valueinput").value);
         Person.calculateAbsoluteValues(value);
     }
+
+    // Menus
+
+    static menu_setItems(menu, items) {
+        menu.innerHTML = "";
+        for (let item of items) {
+            let elem = document.createElement(item.element || "a");
+            elem.innerText = item.title || "";
+            elem.setAttribute("class", "dropdown-item");
+            elem.setAttribute("href", "#");
+
+            for (let attr in item) {
+                elem.setAttribute(attr, item[attr]);
+            }
+
+            menu.appendChild(elem);
+        }
+    }
+
 }
 
 document.getElementById("valueinput").oninput = Interface.calculate;
@@ -242,3 +264,10 @@ p.parent1.addChild(new Person("Sister 2", false))
 Person.distribute()
 Interface.calculate()
 console.log(p)
+
+Interface.menu_setItems(menu_add, [
+    { title: "Item1", onclick: "console.log('item1');" },
+    { title: "Item2", onclick: "console.log('item2');" },
+    { element: "div", class: "dropdown-divider" },
+    { title: "Item3", onclick: "console.log('item3');" },
+])
