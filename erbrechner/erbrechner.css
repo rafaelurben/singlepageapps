@@ -1,3 +1,10 @@
 a[href] {
     color: inherit;
 }
+
+#openbutton {
+    padding: 10px;
+    border-radius: 5px;
+    background-color: lightgreen;
+    text-decoration: none;
+}

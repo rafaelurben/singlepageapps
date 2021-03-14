@@ -7,7 +7,6 @@ class Person {
 
     static everyone = [];
     static root = null;
-    static money_to_state = false;
 
     // Static methods
 
@@ -44,8 +43,6 @@ class Person {
                 this.root.distributeToParental2(1 / 1);
             } else if (this.root.isParental3Alive) {
                 this.root.distributeToParental3(1 / 1);
-            } else {
-                this.money_to_state = true;
             }
         }
     }
@@ -53,10 +50,10 @@ class Person {
     // Constructor
 
     constructor(name, alive, isroot=false) {
+        this.id = Person.everyone.length;
         this.name = String(name);
         this.alive = Boolean(alive);
-
-        this.partner = null;
+        this.generation = null;
 
         this.parent1 = null;
         this.parent2 = null;
@@ -69,7 +66,12 @@ class Person {
         this.min_share_absolute = 0;
 
         Person.everyone.push(this);
-        if (isroot) Person.root = this;
+
+        if (isroot) { 
+            Person.root = this;
+            this.partner = null;
+            this.generation = 0;
+        };
     }
 
     // Properties
@@ -109,24 +111,26 @@ class Person {
 
     // Methods
 
-    setParents(parent1, parent2=null) {
-        parent1.children.push(child);
-        this.parent1 = parent1;
-
-        if (parent2) {
-            parent2.children.push(child);
-            this.parent2 = parent2;
-        }
-    }
-
     addChild(child, parent2=null) {
+        child.generation = this.generation + 1;
+
         this.children.push(child);
-        child.parent1 = this;
+        child.setParent1(this);
         
         if (parent2) {
             parent2.children.push(child);
-            child.parent2 = parent2;
+            child.setParent2(this);
         };
+    }
+
+    setParent1(parent) {
+        this.parent1 = parent;
+        this.parent1.generation = this.generation - 1;
+    }
+
+    setParent2(parent) {
+        this.parent2 = parent;
+        this.parent2.generation = this.generation - 1;
     }
 
     /// Distribution
@@ -182,21 +186,44 @@ class Person {
 
 ///// Interface
 
+let canvas = document.getElementById("canvas");
+let ctx = canvas.getContext("2d");
+
+class Interface {
+    static open() {
+        canvas.requestFullscreen();
+    }
+
+    static fullscreenChange(event) {
+        if (document.fullscreenElement != null) {
+            canvas.style.display = "block";
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            canvas.backgroundColor = "gray";
+        } else {
+            canvas.style.display = "none";
+        }
+    }
+}
+
+document.onfullscreenchange = Interface.fullscreenChange;
+
 ///// Tests
 
-// p = new Person("MAIN", false, true)
-// p.partner = new Person("Partner", false)
+p = new Person("MAIN", false, true)
+p.partner = new Person("Partner", false)
 
-// p.parent1 = new Person("Father", false)
-// p.parent1.parent1 = new Person("Grandfather 1", false)
-// p.parent1.parent2 = new Person("Grandmother 1", true)
+p.setParent1(new Person("Father", false))
+p.parent1.setParent1(new Person("Grandfather 1", false))
+p.parent1.setParent2(new Person("Grandmother 1", true))
 
-// p.parent2 = new Person("Mother", false)
-// p.parent2.parent1 = new Person("Grandfather 2", true)
-// p.parent2.parent2 = new Person("Grandmother 2", true)
+p.setParent2(new Person("Mother", false))
+p.parent2.setParent1(new Person("Grandfather 2", true))
+p.parent2.setParent2(new Person("Grandmother 2", true))
 
-// p.parent1.addChild(new Person("Sister 1", true), p.parent2)
-// p.parent1.addChild(new Person("Sister 2", false))
+p.parent1.addChild(new Person("Sister 1", true), p.parent2)
+p.parent1.addChild(new Person("Sister 2", false))
 
 
-// Person.distribute()
+Person.distribute()
+console.log(p)
