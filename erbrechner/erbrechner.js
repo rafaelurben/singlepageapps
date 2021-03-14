@@ -11,7 +11,9 @@ class Person {
     // Static methods
 
     static resetDistribution() {
-        for (let person of this.everyone) {
+        for (let personid in this.everyone) {
+            let person = this.everyone[personid];
+            person.id = personid;
             person.share_percent = 0;
             person.share_absolute = 0;
             person.min_share_percent = 0;
