@@ -47,7 +47,7 @@ class Person {
             if (this.root.isParental1Alive) {
                 this.root.distributeToParental1(1 / 1, 1 / 2, true);
             } else if (this.root.isParental2Alive) {
-                this.root.distributeToParental2(1 / 1);
+                this.root.distributeToParental2(1 / 1, 1 / 2);
             } else if (this.root.isParental3Alive) {
                 this.root.distributeToParental3(1 / 1);
             }
@@ -215,7 +215,7 @@ class Interface {
     static calculate(event=null) {
         Person.distribute();
         let value = parseInt(document.getElementById("valueinput").value);
-        Person.calculateAbsoluteValues();
+        Person.calculateAbsoluteValues(value);
     }
 }
 
@@ -227,7 +227,7 @@ document.onfullscreenchange = Interface.fullscreenChange;
 p = new Person("MAIN", false, true)
 p.partner = new Person("Partner", false)
 
-p.setParent1(new Person("Father", false))
+p.setParent1(new Person("Father", true))
 p.parent1.setParent1(new Person("Grandfather 1", false))
 p.parent1.setParent2(new Person("Grandmother 1", true))
 
@@ -240,4 +240,5 @@ p.parent1.addChild(new Person("Sister 2", false))
 
 
 Person.distribute()
+Interface.calculate()
 console.log(p)
