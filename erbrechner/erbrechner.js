@@ -18,6 +18,13 @@ class Person {
             person.min_share_absolute = 0;
         }
     }
+    
+    static calculateAbsoluteValues(amount) {
+        for (let person of this.everyone) {
+            person.share_absolute = person.share_percent * amount;
+            person.min_share_absolute = person.min_share_percent * amount;
+        }
+    }
 
     static distribute() {
         this.resetDistribution();
@@ -186,23 +193,29 @@ class Person {
 
 ///// Interface
 
+let app = document.getElementById("app");
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
 class Interface {
-    static open() {
-        canvas.requestFullscreen();
+    static fullscreen() {
+        app.requestFullscreen();
     }
 
     static fullscreenChange(event) {
         if (document.fullscreenElement != null) {
-            canvas.style.display = "block";
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            canvas.backgroundColor = "gray";
+            document.getElementById("fullscreen-open").style.display = "none";
+            document.getElementById("fullscreen-close").style.display = "block";
         } else {
-            canvas.style.display = "none";
+            document.getElementById("fullscreen-open").style.display = "block";
+            document.getElementById("fullscreen-close").style.display = "none";
         }
+    }
+
+    static calculate() {
+        Person.distribute();
+        let value = parseInt(document.getElementById("valueinput").value);
+        Person.calculateAbsoluteValues();
     }
 }
 
