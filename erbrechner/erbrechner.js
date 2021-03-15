@@ -367,11 +367,11 @@ p = new Person("Ich", false, true)
 p.partner = new Person("Ehepartner", false)
 
 p.setParent1(new Person("Vater", true))
-p.parent1.setParent1(new Person("Grossvater (parental)", false))
-p.parent1.setParent2(new Person("Grossmutter (parental)", false))
+p.parent1.setParent1(new Person("Grossvater (paternal)", false))
+p.parent1.setParent2(new Person("Grossmutter (paternal)", false))
 
 p.setParent2(new Person("Mutter", false))
-p.parent2.setParent1(new Person("Grrossvater (maternal)", false))
+p.parent2.setParent1(new Person("Grossvater (maternal)", false))
 p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
 
 
