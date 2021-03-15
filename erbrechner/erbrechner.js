@@ -123,6 +123,10 @@ class Person {
         return Person.root.partner !== this;
     }
 
+    get canBeAlive() {
+        return Person.root !== this;
+    }
+
     get id() {
         return Person.everyone.indexOf(this);
     }
@@ -227,8 +231,6 @@ class Person {
 ///// Interface
 
 let app = document.getElementById("app");
-let canvas = document.getElementById("canvas");
-let ctx = canvas.getContext("2d");
 
 let menu_action = document.getElementById("menu_action");
 let menu_select = document.getElementById("menu_select");
@@ -253,11 +255,12 @@ class Interface {
         for (let item of items) {
             let elem = document.createElement(item.element || "a");
             elem.innerText = item.text || "";
+            if (item.innerHTML) elem.innerHTML = item.innerHTML;
             elem.setAttribute("class", "dropdown-item");
             elem.setAttribute("href", "#");
 
             for (let attr in item) {
-                elem.setAttribute(attr, item[attr]);
+                if (!["innerHTML", "text"].includes(attr)) elem.setAttribute(attr, item[attr]);
             }
 
             menu.appendChild(elem);
@@ -270,8 +273,9 @@ class Interface {
         ];
         for (let personid in Person.everyone) {
             let person = Person.everyone[personid];
+            let id = person.id.toString().padStart(2, "0")
             items.push({
-                text: `(${person.id.toString().padStart(2, "0")}) ${person.name}`,
+                text: (person.alive ? `(${id}) ` : `[${id}] `) + person.name,
                 onclick: `Interface.select(${person.id});`,
                 class: (person === this.selectedItem) ? "dropdown-item active" : "dropdown-item"
             })
@@ -284,8 +288,11 @@ class Interface {
         if (this.selectedItem === null) {
             items.push({ element: "strong", class: "dropdown-header", text: "Bitte wählen Sie zuerst eine Person aus!" });
         } else {
-            items.push({ element: "strong", class: "dropdown-header", text: "Ändern" });
-            items.push({ text: "Bearbeiten", onclick: "Interface.edit();" });
+            items.push({ element: "strong", class: "dropdown-header", text: "Umbenennen" });
+            items.push({ element: "div", innerHTML: `<input id="renameinput" class="form-control" placeholder="Umbenennen" oninput="Interface.rename();" value="${this.selectedItem.name}">`});
+            
+            if (this.selectedItem.canBeAlive || this.selectedItem.canDelete) items.push({ element: "strong", class: "dropdown-header", text: "Ändern" });
+            if (this.selectedItem.canBeAlive) items.push({ text: "Lebend / Tot", onclick: "Interface.toggleAlive();", class: this.selectedItem.alive ? "dropdown-item active" : "dropdown-item" });
             if (this.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
 
             if (this.selectedItem.canHaveChildren) {
@@ -327,18 +334,26 @@ class Interface {
     }
 
     static delete() {
-        // delete confirmation?
         this.selectedItem.delete();
+        this.update();
     }
 
-    static edit() {
-        console.log("edit");
-        // edit dialogue
+    static rename() {
+        this.selectedItem.name = document.getElementById("renameinput").value;
+        this.update();
+    }
+
+    static toggleAlive() {
+        this.selectedItem.alive = !this.selectedItem.alive;
+        this.update();
     }
 
     static addChild(p1id, p2id=null) {
-        console.log("addChild", p1id, p2id);
-        // addChild dialogue
+        let child = new Person("Neues Kind", true);
+        let parent1 = Person.everyone[p1id];
+        let parent2 = p2id === null ? null : Person.everyone[p2id];
+        parent1.addChild(child, parent2);
+        this.select(child.id);
     }
 
     // Draw
@@ -349,6 +364,7 @@ class Interface {
     static update() {
         this._menu_updateSelectMenu();
         this._menu_updateActionMenu();
+        this.calculate();
     }
 
     // Events
@@ -366,6 +382,44 @@ class Interface {
 
 document.getElementById("valueinput").oninput = Interface.calculate;
 document.onfullscreenchange = Interface.onfullscreenchange;
+
+///// FamilyTree
+
+class FamilyTree {
+    static setup() {
+        var width = window.innerWidth;
+        var height = window.innerHeight;
+
+        var stage = new Konva.Stage({
+            container: 'canvascontainer',
+            width: width,
+            height: height,
+            draggable: true,
+        });
+
+        var layer = new Konva.Layer();
+        stage.add(layer);
+
+        var WIDTH = 3000;
+        var HEIGHT = 3000;
+        var NUMBER = 200;
+
+        function generateNode() {
+            return new Konva.Circle({
+                x: WIDTH * Math.random(),
+                y: HEIGHT * Math.random(),
+                radius: 50,
+                fill: 'red',
+                stroke: 'black',
+            });
+        }
+
+        for (var i = 0; i < NUMBER; i++) {
+            layer.add(generateNode());
+        }
+        layer.draw();
+    }
+}
 
 ///// Basic
 
