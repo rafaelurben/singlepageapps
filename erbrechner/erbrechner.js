@@ -241,7 +241,8 @@ class Interface {
             let person = Person.everyone[personid];
             items.push({
                 text: `(${person.id.toString().padStart(2, "0")}) ${person.name}`,
-                onclick: `Interface.select(${person.id});`
+                onclick: `Interface.select(${person.id});`,
+                class: (person === this.selectedItem) ? "dropdown-item active" : "dropdown-item"
             })
         }
         this._menu_setItems(menu_select, items);
@@ -252,6 +253,7 @@ class Interface {
     static select(itemid) {
         this.selectedItem = Person.everyone[itemid];
         console.log("selected", this.selectedItem);
+        this.menu_updateSelectMenu();
     }
 
     // Draw
