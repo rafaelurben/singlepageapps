@@ -11,9 +11,7 @@ class Person {
     // Static methods
 
     static resetDistribution() {
-        for (let personid in this.everyone) {
-            let person = this.everyone[personid];
-            person.id = personid;
+        for (let person of this.everyone) {
             person.share_percent = 0;
             person.share_absolute = 0;
             person.min_share_percent = 0;
@@ -59,7 +57,6 @@ class Person {
     // Constructor
 
     constructor(name, alive, isroot = false) {
-        this.id = Person.everyone.length;
         this.name = String(name);
         this.alive = Boolean(alive);
         this.generation = null;
@@ -118,6 +115,14 @@ class Person {
         return list;
     }
 
+    get canDelete() {
+        return (Person.root !== this && Person.root.partner !== this && this.generation !== -2 && !(this.generation === -1 && ((Person.root.parent1 && Person.root.parent1 === this) || (Person.root.parent2 && Person.root.parent2 === this))));
+    }
+
+    get id() {
+        return Person.everyone.indexOf(this);
+    }
+
     // Methods
 
     addChild(child, parent2 = null) {
@@ -128,7 +133,7 @@ class Person {
 
         if (parent2) {
             parent2.children.push(child);
-            child.setParent2(this);
+            child.setParent2(parent2);
         };
     }
 
@@ -140,6 +145,28 @@ class Person {
     setParent2(parent) {
         this.parent2 = parent;
         this.parent2.generation = this.generation - 1;
+    }
+
+    delete() {
+        if (this.canDelete) {
+            if (this.parent1) {
+                let index = this.parent1.children.indexOf(this);
+                this.parent1.children.splice(index, 1);
+            } 
+            if (this.parent2) {
+                let index = this.parent2.children.indexOf(this);
+                this.parent2.children.splice(index, 1);
+            }
+            this.deleteRecursive();
+            Person.resetDistribution();
+        }
+    }
+
+    deleteRecursive() {
+        for (let child of this.children) {
+            child.deleteRecursive();
+        }
+        Person.everyone.splice(this.id, 1);
     }
 
     /// Distribution
