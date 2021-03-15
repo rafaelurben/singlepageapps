@@ -260,9 +260,9 @@ class Interface {
         }
     }
 
-    static menu_updateSelectMenu() {
+    static _menu_updateSelectMenu() {
         let items = [
-            { element: "strong", class: "dropdown-header", text: "Select a person" },
+            { element: "strong", class: "dropdown-header", text: "Person auswählen" },
         ];
         for (let personid in Person.everyone) {
             let person = Person.everyone[personid];
@@ -275,16 +275,75 @@ class Interface {
         this._menu_setItems(menu_select, items);
     }
 
+    static _menu_updateActionMenu() {
+        let items = [];
+        if (this.selectedItem === null) {
+            items.push({ element: "strong", class: "dropdown-header", text: "Bitte wählen Sie zuerst eine Person aus!" });
+        } else {
+            items.push({ element: "strong", class: "dropdown-header", text: "Ändern" });
+            items.push({ text: "Bearbeiten", onclick: "Interface.edit();" });
+            if (this.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
+
+            items.push({ element: "div", class: "dropdown-divider" });
+
+            items.push({ element: "strong", class: "dropdown-header", text: "Kind hinzufügen" });
+
+            let other = null;
+            if (Person.root.parent2 && this.selectedItem == Person.root.parent1) {
+                other = Person.root.parent2;
+            } else if (Person.root.parent1 && this.selectedItem == Person.root.parent2) {
+                other = Person.root.parent1;
+            } else if (Person.root.parent1 && Person.root.parent1.parent2 && this.selectedItem == Person.root.parent1.parent1) {
+                other = Person.root.parent1.parent2;
+            } else if (Person.root.parent1 && Person.root.parent1.parent1 && this.selectedItem == Person.root.parent1.parent2) {
+                other = Person.root.parent1.parent1;
+            } else if (Person.root.parent2 && Person.root.parent2.parent2 && this.selectedItem == Person.root.parent2.parent1) {
+                other = Person.root.parent2.parent2;
+            } else if (Person.root.parent2 && Person.root.parent2.parent1 && this.selectedItem == Person.root.parent2.parent2) {
+                other = Person.root.parent2.parent1;
+            }
+
+            if (other) {
+                items.push({ text: `Kind mit (${other.id}) ${other.name}`, onclick: `Interface.addChild(${this.selectedItem.id},${other.id});` });
+                items.push({ text: "Kind mit anderer Person", onclick: `Interface.addChild(${this.selectedItem.id});` });
+            } else {
+                items.push({ text: "Neues Kind", onclick: `Interface.addChild(${this.selectedItem.id});` });
+            }
+        }
+        this._menu_setItems(menu_action, items);
+    }
+
     // Actions
 
     static select(itemid) {
         this.selectedItem = Person.everyone[itemid];
-        console.log("selected", this.selectedItem);
-        this.menu_updateSelectMenu();
+        this.update();
+    }
+
+    static delete() {
+        // delete confirmation?
+        this.selectedItem.delete();
+    }
+
+    static edit() {
+        console.log("edit");
+        // edit dialogue
+    }
+
+    static addChild(p1id, p2id=null) {
+        console.log("addChild", p1id, p2id);
+        // addChild dialogue
     }
 
     // Draw
 
+
+    // General
+
+    static update() {
+        this._menu_updateSelectMenu();
+        this._menu_updateActionMenu();
+    }
 
     // Events
 
@@ -302,32 +361,21 @@ class Interface {
 document.getElementById("valueinput").oninput = Interface.calculate;
 document.onfullscreenchange = Interface.onfullscreenchange;
 
-///// Tests
+///// Basic
 
-p = new Person("MAIN", false, true)
-p.partner = new Person("Partner", false)
+p = new Person("Ich", false, true)
+p.partner = new Person("Ehepartner", false)
 
-p.setParent1(new Person("Father", true))
-p.parent1.setParent1(new Person("Grandfather 1", false))
-p.parent1.setParent2(new Person("Grandmother 1", true))
+p.setParent1(new Person("Vater", true))
+p.parent1.setParent1(new Person("Grossvater (parental)", false))
+p.parent1.setParent2(new Person("Grossmutter (parental)", false))
 
-p.setParent2(new Person("Mother", false))
-p.parent2.setParent1(new Person("Grandfather 2", true))
-p.parent2.setParent2(new Person("Grandmother 2", true))
+p.setParent2(new Person("Mutter", false))
+p.parent2.setParent1(new Person("Grrossvater (maternal)", false))
+p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
 
-p.parent1.addChild(new Person("Sister 1", true), p.parent2)
-p.parent1.addChild(new Person("Sister 2", false))
 
 
 Person.distribute()
 Interface.calculate()
-console.log(p)
-
-Interface._menu_setItems(menu_action, [
-    { text: "Item1", onclick: "console.log('item1');" },
-    { text: "Item2", onclick: "console.log('item2');" },
-    { element: "div", class: "dropdown-divider" },
-    { text: "Item3", onclick: "console.log('item3');" },
-])
-
-Interface.menu_updateSelectMenu()
+Interface.update();
