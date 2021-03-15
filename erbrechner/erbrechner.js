@@ -340,7 +340,7 @@ class Interface {
 
     static rename() {
         this.selectedItem.name = document.getElementById("renameinput").value;
-        this.update();
+        this._menu_updateSelectMenu();
     }
 
     static toggleAlive() {
@@ -434,8 +434,4 @@ p.setParent2(new Person("Mutter", false))
 p.parent2.setParent1(new Person("Grossvater (maternal)", false))
 p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
 
-
-
-Person.distribute()
-Interface.calculate()
-Interface.update();
+Interface.select(0);
