@@ -10,3 +10,8 @@
 #fullscreen-open, #fullscreen-close {
     padding: 0 5px;
 }
+
+.dropdown-menu {
+    max-height: 80vh;
+    overflow-y: auto;
+}

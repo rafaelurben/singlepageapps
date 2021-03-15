@@ -119,6 +119,10 @@ class Person {
         return (Person.root !== this && Person.root.partner !== this && this.generation !== -2 && !(this.generation === -1 && ((Person.root.parent1 && Person.root.parent1 === this) || (Person.root.parent2 && Person.root.parent2 === this))));
     }
 
+    get canHaveChildren() {
+        return Person.root.partner !== this;
+    }
+
     get id() {
         return Person.everyone.indexOf(this);
     }
@@ -284,30 +288,32 @@ class Interface {
             items.push({ text: "Bearbeiten", onclick: "Interface.edit();" });
             if (this.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
 
-            items.push({ element: "div", class: "dropdown-divider" });
+            if (this.selectedItem.canHaveChildren) {
+                items.push({ element: "div", class: "dropdown-divider" });
 
-            items.push({ element: "strong", class: "dropdown-header", text: "Kind hinzufügen" });
+                items.push({ element: "strong", class: "dropdown-header", text: "Kind hinzufügen" });
 
-            let other = null;
-            if (Person.root.parent2 && this.selectedItem == Person.root.parent1) {
-                other = Person.root.parent2;
-            } else if (Person.root.parent1 && this.selectedItem == Person.root.parent2) {
-                other = Person.root.parent1;
-            } else if (Person.root.parent1 && Person.root.parent1.parent2 && this.selectedItem == Person.root.parent1.parent1) {
-                other = Person.root.parent1.parent2;
-            } else if (Person.root.parent1 && Person.root.parent1.parent1 && this.selectedItem == Person.root.parent1.parent2) {
-                other = Person.root.parent1.parent1;
-            } else if (Person.root.parent2 && Person.root.parent2.parent2 && this.selectedItem == Person.root.parent2.parent1) {
-                other = Person.root.parent2.parent2;
-            } else if (Person.root.parent2 && Person.root.parent2.parent1 && this.selectedItem == Person.root.parent2.parent2) {
-                other = Person.root.parent2.parent1;
-            }
+                let other = null;
+                if (Person.root.parent2 && this.selectedItem == Person.root.parent1) {
+                    other = Person.root.parent2;
+                } else if (Person.root.parent1 && this.selectedItem == Person.root.parent2) {
+                    other = Person.root.parent1;
+                } else if (Person.root.parent1 && Person.root.parent1.parent2 && this.selectedItem == Person.root.parent1.parent1) {
+                    other = Person.root.parent1.parent2;
+                } else if (Person.root.parent1 && Person.root.parent1.parent1 && this.selectedItem == Person.root.parent1.parent2) {
+                    other = Person.root.parent1.parent1;
+                } else if (Person.root.parent2 && Person.root.parent2.parent2 && this.selectedItem == Person.root.parent2.parent1) {
+                    other = Person.root.parent2.parent2;
+                } else if (Person.root.parent2 && Person.root.parent2.parent1 && this.selectedItem == Person.root.parent2.parent2) {
+                    other = Person.root.parent2.parent1;
+                }
 
-            if (other) {
-                items.push({ text: `Kind mit (${other.id}) ${other.name}`, onclick: `Interface.addChild(${this.selectedItem.id},${other.id});` });
-                items.push({ text: "Kind mit anderer Person", onclick: `Interface.addChild(${this.selectedItem.id});` });
-            } else {
-                items.push({ text: "Neues Kind", onclick: `Interface.addChild(${this.selectedItem.id});` });
+                if (other) {
+                    items.push({ text: `Kind mit (${other.id}) ${other.name}`, onclick: `Interface.addChild(${this.selectedItem.id},${other.id});` });
+                    items.push({ text: "Kind mit anderer Person", onclick: `Interface.addChild(${this.selectedItem.id});` });
+                } else {
+                    items.push({ text: "Neues Kind", onclick: `Interface.addChild(${this.selectedItem.id});` });
+                }
             }
         }
         this._menu_setItems(menu_action, items);
