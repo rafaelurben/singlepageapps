@@ -8,9 +8,14 @@ class Person {
     static everyone = [];
     static root = null;
 
+    static free_quota_percent = 0;
+    static free_quota_absolute = 0;
+
     // Static methods
 
     static resetDistribution() {
+        Person.free_quota_percent = 0;
+        Person.free_quota_absolute = 0;
         for (let person of this.everyone) {
             person.share_percent = 0;
             person.share_absolute = 0;
@@ -19,15 +24,10 @@ class Person {
         }
     }
 
-    static calculateAbsoluteValues(amount) {
-        for (let person of this.everyone) {
-            person.share_absolute = person.share_percent * amount;
-            person.min_share_absolute = person.min_share_percent * amount;
-        }
-    }
-
-    static distribute() {
+    static distribute(amount=0) {
         this.resetDistribution();
+
+        // Distribution
         if (this.root.partner && this.root.partner.alive) {
             if (this.root.isParental1Alive) {
                 this.root.partner.share_percent = 1 / 2;
@@ -52,6 +52,15 @@ class Person {
                 this.root.distributeToParental3(1 / 1);
             }
         }
+
+        // Free quota + absolute share
+        this.free_quota_percent = 1;
+        for (let person of this.everyone) {
+            person.share_absolute = person.share_percent * amount;
+            person.min_share_absolute = person.min_share_percent * amount;
+            this.free_quota_percent -= person.min_share_percent;
+        }
+        this.free_quota_absolute = this.free_quota_percent * amount;
     }
 
     // Constructor
@@ -248,12 +257,6 @@ class Interface {
         app.requestFullscreen();
     }
 
-    static calculate(event = null) {
-        Person.distribute();
-        let value = parseInt(document.getElementById("valueinput").value);
-        Person.calculateAbsoluteValues(value);
-    }
-
     // Menus
 
     static _menu_setItems(menu, items) {
@@ -346,6 +349,15 @@ class Interface {
             if (this.selectedItem.alive) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Erbanteil" });
+                items.push({ class: "dropdown-item disabled", text: `Relativ: ${this.selectedItem.share_percent*100}%` });
+                items.push({ class: "dropdown-item disabled", text: `Absolut: ${this.selectedItem.share_absolute} CHF` });
+                items.push({ class: "dropdown-item disabled", text: `Min. Relativ: ${this.selectedItem.min_share_percent*100}%` });
+                items.push({ class: "dropdown-item disabled", text: `Min. Absolut: ${this.selectedItem.min_share_absolute} CHF` });
+            } else if (this.selectedItem === Person.root) {
+                items.push({ element: "div", class: "dropdown-divider" });
+                items.push({ element: "strong", class: "dropdown-header", text: "Freie Quote" });
+                items.push({ class: "dropdown-item disabled", text: `Relativ: ${Person.free_quota_percent * 100}%` });
+                items.push({ class: "dropdown-item disabled", text: `Absolut: ${Person.free_quota_absolute} CHF` });
             }
 
             if (this.selectedItem.parent1 || this.selectedItem.parent2) {
@@ -404,10 +416,10 @@ class Interface {
     // General
 
     static update() {
-        this._menu_updateSelectMenu();
-        this._menu_updateActionMenu();
-        this._menu_updateInfosMenu();
-        this.calculate();
+        Person.distribute(parseInt(document.getElementById("valueinput").value || 0));
+        Interface._menu_updateSelectMenu();
+        Interface._menu_updateActionMenu();
+        Interface._menu_updateInfosMenu();
     }
 
     // Events
@@ -423,7 +435,7 @@ class Interface {
     }
 }
 
-document.getElementById("valueinput").oninput = Interface.calculate;
+document.getElementById("valueinput").oninput = Interface.update;
 document.onfullscreenchange = Interface.onfullscreenchange;
 
 ///// FamilyTree
@@ -486,7 +498,7 @@ p.setParent1(new Person("Vater", true))
 p.parent1.setParent1(new Person("Grossvater (paternal)", false))
 p.parent1.setParent2(new Person("Grossmutter (paternal)", false))
 
-p.setParent2(new Person("Mutter", false))
+p.setParent2(new Person("Mutter", true))
 p.parent2.setParent1(new Person("Grossvater (maternal)", false))
 p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
 
