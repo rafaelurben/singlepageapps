@@ -131,6 +131,11 @@ class Person {
         return Person.everyone.indexOf(this);
     }
 
+    get displayName() {
+        let id = this.id.toString().padStart(2, "0");
+        return (this.alive ? `(${id}) ` : `[${id}] `) + this.name;
+    }
+
     // Methods
 
     addChild(child, parent2 = null) {
@@ -234,6 +239,7 @@ let app = document.getElementById("app");
 
 let menu_action = document.getElementById("menu_action");
 let menu_select = document.getElementById("menu_select");
+let menu_infos = document.getElementById("menu_infos");
 
 class Interface {
     static selectedItem = null
@@ -273,9 +279,8 @@ class Interface {
         ];
         for (let personid in Person.everyone) {
             let person = Person.everyone[personid];
-            let id = person.id.toString().padStart(2, "0")
             items.push({
-                text: (person.alive ? `(${id}) ` : `[${id}] `) + person.name,
+                text: person.displayName,
                 onclick: `Interface.select(${person.id});`,
                 class: (person === this.selectedItem) ? "dropdown-item active" : "dropdown-item"
             })
@@ -328,6 +333,39 @@ class Interface {
         this._menu_setItems(menu_action, items);
     }
 
+    static _menu_updateInfosMenu() {
+        let items = [];
+        if (this.selectedItem === null) {
+            items.push({ element: "strong", class: "dropdown-header", text: "Bitte wählen Sie zuerst eine Person aus!" });
+        } else {
+            items.push({ element: "strong", class: "dropdown-header", text: "Generell" });
+            items.push({ class: "dropdown-item disabled", text: `ID: ${this.selectedItem.id}` });
+            items.push({ class: "dropdown-item disabled", text: `Name: ${this.selectedItem.name}` });
+            items.push({ class: "dropdown-item disabled", text: "Status: " + (this.selectedItem.alive ? "Lebend" : "Tot") });
+            
+            if (this.selectedItem.alive) {
+                items.push({ element: "div", class: "dropdown-divider" });
+                items.push({ element: "strong", class: "dropdown-header", text: "Erbanteil" });
+            }
+
+            if (this.selectedItem.parent1 || this.selectedItem.parent2) {
+                items.push({ element: "div", class: "dropdown-divider" });
+                items.push({ element: "strong", class: "dropdown-header", text: "Eltern" });
+                if (this.selectedItem.parent1) items.push({ text: this.selectedItem.parent1.displayName, onclick: `Interface.select(${this.selectedItem.parent1.id});` });
+                if (this.selectedItem.parent2) items.push({ text: this.selectedItem.parent2.displayName, onclick: `Interface.select(${this.selectedItem.parent2.id});` });
+            }
+
+            if (this.selectedItem.children.length > 0) {
+                items.push({ element: "div", class: "dropdown-divider" });
+                items.push({ element: "strong", class: "dropdown-header", text: "Kinder" });
+                for (let child of this.selectedItem.children) {
+                    items.push({ text: child.displayName, onclick: `Interface.select(${child.id});` });
+                }
+            }
+        }
+        this._menu_setItems(menu_infos, items);
+    }
+
     // Actions
 
     static select(itemid) {
@@ -344,6 +382,7 @@ class Interface {
     static rename() {
         this.selectedItem.name = document.getElementById("renameinput").value;
         this._menu_updateSelectMenu();
+        this._menu_updateInfosMenu();
     }
 
     static toggleAlive() {
@@ -367,6 +406,7 @@ class Interface {
     static update() {
         this._menu_updateSelectMenu();
         this._menu_updateActionMenu();
+        this._menu_updateInfosMenu();
         this.calculate();
     }
 
