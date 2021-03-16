@@ -337,6 +337,7 @@ class Interface {
 
     static delete() {
         this.selectedItem.delete();
+        this.selectedItem = null;
         this.update();
     }
 
