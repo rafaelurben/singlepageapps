@@ -291,10 +291,12 @@ class Interface {
             items.push({ element: "strong", class: "dropdown-header", text: "Umbenennen" });
             items.push({ element: "div", innerHTML: `<input id="renameinput" class="form-control" placeholder="Umbenennen" oninput="Interface.rename();" value="${this.selectedItem.name}">`});
             
-            if (this.selectedItem.canBeAlive || this.selectedItem.canDelete) items.push({ element: "strong", class: "dropdown-header", text: "Ändern" });
-            if (this.selectedItem.canBeAlive) items.push({ text: "Lebend / Tot", onclick: "Interface.toggleAlive();", class: this.selectedItem.alive ? "dropdown-item active" : "dropdown-item" });
-            if (this.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
-
+            if (this.selectedItem.canBeAlive || this.selectedItem.canDelete) {
+                items.push({ element: "div", class: "dropdown-divider" });
+                items.push({ element: "strong", class: "dropdown-header", text: "Ändern" });
+                if (this.selectedItem.canBeAlive) items.push({ text: "Lebend / Tot", onclick: "Interface.toggleAlive();", class: this.selectedItem.alive ? "dropdown-item active" : "dropdown-item" });
+                if (this.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
+            }
             if (this.selectedItem.canHaveChildren) {
                 items.push({ element: "div", class: "dropdown-divider" });
 
@@ -386,22 +388,32 @@ document.onfullscreenchange = Interface.onfullscreenchange;
 ///// FamilyTree
 
 class FamilyTree {
+    static STAGEWIDTH = 4000;
+    static STAGEHEIGHT = 2000;
+    static stage = new Konva.Stage({
+        container: 'canvascontainer',
+        width: this.STAGEWIDTH,
+        height: this.STAGEHEIGHT,
+        draggable: true,
+    })
+
+    static fitStageIntoParentContainer() {
+        var container = document.querySelector('#canvascontainer');
+        var containerWidth = container.offsetWidth;
+        var scale = containerWidth / FamilyTree.STAGEWIDTH;
+
+        FamilyTree.stage.width(FamilyTree.STAGEWIDTH * scale);
+        FamilyTree.stage.height(FamilyTree.STAGEHEIGHT * scale);
+        FamilyTree.stage.scale({ x: scale, y: scale });
+        FamilyTree.stage.draw();
+      }
+
     static setup() {
-        var width = window.innerWidth;
-        var height = window.innerHeight;
-
-        var stage = new Konva.Stage({
-            container: 'canvascontainer',
-            width: width,
-            height: height,
-            draggable: true,
-        });
-
         var layer = new Konva.Layer();
-        stage.add(layer);
+        FamilyTree.stage.add(layer);
 
-        var WIDTH = 3000;
-        var HEIGHT = 3000;
+        var WIDTH = FamilyTree.STAGEWIDTH;
+        var HEIGHT = FamilyTree.STAGEHEIGHT;
         var NUMBER = 200;
 
         function generateNode() {
@@ -420,6 +432,9 @@ class FamilyTree {
         layer.draw();
     }
 }
+
+window.addEventListener('load', FamilyTree.fitStageIntoParentContainer);
+window.addEventListener('resize', FamilyTree.fitStageIntoParentContainer);
 
 ///// Basic
 

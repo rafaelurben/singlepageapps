@@ -1,3 +1,9 @@
+#app {
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
 #menubar {
     padding-left: 16px;
 }
