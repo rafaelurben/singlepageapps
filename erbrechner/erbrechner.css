@@ -23,6 +23,10 @@
     overflow-y: auto;
 }
 
+.dropdown-item {
+    margin-right: 10px;
+}
+
 /* Remove arrow buttons in number input */
 
 /* Chrome, Safari, Edge, Opera */
