@@ -22,3 +22,17 @@
     max-height: 80vh;
     overflow-y: auto;
 }
+
+/* Remove arrow buttons in number input */
+
+/* Chrome, Safari, Edge, Opera */
+#valueinput::-webkit-outer-spin-button,
+#valueinput::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* Firefox */
+#valueinput {
+    -moz-appearance: textfield;
+}
