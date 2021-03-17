@@ -5,18 +5,26 @@
 class Person {
     // Static fields
 
-    static everyone = [];
+    static everyoneById = {}
     static root = null;
+
+    static highestid = 0;
 
     static free_quota_percent = 0;
     static free_quota_absolute = 0;
+
+    // Static properties
+
+    static get everyone() {
+        return Object.values(Person.everyoneById)
+    }
 
     // Static methods
 
     static resetDistribution() {
         Person.free_quota_percent = 0;
         Person.free_quota_absolute = 0;
-        for (let person of this.everyone) {
+        for (let person of Person.everyone) {
             person.share_percent = 0;
             person.share_absolute = 0;
             person.min_share_percent = 0;
@@ -24,43 +32,43 @@ class Person {
         }
     }
 
-    static distribute(amount=0) {
-        this.resetDistribution();
+    static distribute(amount = 0) {
+        Person.resetDistribution();
 
         // Distribution
-        if (this.root.partner && this.root.partner.alive) {
-            if (this.root.isParental1Alive) {
-                this.root.partner.share_percent = 1 / 2;
-                this.root.partner.min_share_percent = (1 / 2) * (1 / 2);
+        if (Person.root.partner && Person.root.partner.alive) {
+            if (Person.root.isParental1Alive) {
+                Person.root.partner.share_percent = 1 / 2;
+                Person.root.partner.min_share_percent = (1 / 2) * (1 / 2);
 
-                this.root.distributeToParental1(1 / 2, 3 / 4, true);
-            } else if (this.root.isParental2Alive) {
-                this.root.partner.share_percent = 3 / 4;
-                this.root.partner.min_share_percent = (3 / 4) * (1 / 2);
+                Person.root.distributeToParental1(1 / 2, 3 / 4, true);
+            } else if (Person.root.isParental2Alive) {
+                Person.root.partner.share_percent = 3 / 4;
+                Person.root.partner.min_share_percent = (3 / 4) * (1 / 2);
 
-                this.root.distributeToParental2(1 / 4, 1 / 2)
+                Person.root.distributeToParental2(1 / 4, 1 / 2)
             } else {
-                this.root.partner.share_percent = 1 / 1;
-                this.root.partner.min_share_percent = (1 / 1) * (1 / 2);
+                Person.root.partner.share_percent = 1 / 1;
+                Person.root.partner.min_share_percent = (1 / 1) * (1 / 2);
             }
         } else {
-            if (this.root.isParental1Alive) {
-                this.root.distributeToParental1(1 / 1, 1 / 2, true);
-            } else if (this.root.isParental2Alive) {
-                this.root.distributeToParental2(1 / 1, 1 / 2);
-            } else if (this.root.isParental3Alive) {
-                this.root.distributeToParental3(1 / 1);
+            if (Person.root.isParental1Alive) {
+                Person.root.distributeToParental1(1 / 1, 1 / 2, true);
+            } else if (Person.root.isParental2Alive) {
+                Person.root.distributeToParental2(1 / 1, 1 / 2);
+            } else if (Person.root.isParental3Alive) {
+                Person.root.distributeToParental3(1 / 1);
             }
         }
 
         // Free quota + absolute share
-        this.free_quota_percent = 1;
-        for (let person of this.everyone) {
+        Person.free_quota_percent = 1;
+        for (let person of Person.everyone) {
             person.share_absolute = person.share_percent * amount;
             person.min_share_absolute = person.min_share_percent * amount;
-            this.free_quota_percent -= person.min_share_percent;
+            Person.free_quota_percent -= person.min_share_percent;
         }
-        this.free_quota_absolute = this.free_quota_percent * amount;
+        Person.free_quota_absolute = Person.free_quota_percent * amount;
     }
 
     static json() {
@@ -75,6 +83,7 @@ class Person {
     // Constructor
 
     constructor(name, alive, isroot = false) {
+        this.id = Person.highestid++;
         this.name = String(name);
         this.alive = Boolean(alive);
         this.generation = null;
@@ -89,7 +98,7 @@ class Person {
         this.min_share_percent = 0;
         this.min_share_absolute = 0;
 
-        Person.everyone.push(this);
+        Person.everyoneById[this.id] = this;
 
         if (isroot) {
             Person.root = this;
@@ -145,10 +154,6 @@ class Person {
         return Person.root !== this;
     }
 
-    get id() {
-        return Person.everyone.indexOf(this);
-    }
-
     get displayName() {
         let id = this.id.toString().padStart(2, "0");
         return (this.alive ? `(${id}) ` : `[${id}] `) + this.name;
@@ -183,7 +188,7 @@ class Person {
             if (this.parent1) {
                 let index = this.parent1.children.indexOf(this);
                 this.parent1.children.splice(index, 1);
-            } 
+            }
             if (this.parent2) {
                 let index = this.parent2.children.indexOf(this);
                 this.parent2.children.splice(index, 1);
@@ -197,7 +202,7 @@ class Person {
         for (let child of this.children) {
             child.deleteRecursive();
         }
-        Person.everyone.splice(this.id, 1);
+        delete Person.everyoneById[this.id];
     }
 
     json() {
@@ -210,7 +215,7 @@ class Person {
             share_absolute: this.share_absolute,
             min_share_percent: this.min_share_percent,
             min_share_absolute: this.min_share_absolute,
-            
+
             parent1_id: this.parent1 ? this.parent1.id : null,
             parent2_id: this.parent2 ? this.parent2.id : null,
             children_ids: this.children.map(c => c.id),
@@ -306,134 +311,133 @@ class Interface {
         let items = [
             { element: "strong", class: "dropdown-header", text: "Person auswählen" },
         ];
-        for (let personid in Person.everyone) {
-            let person = Person.everyone[personid];
+        for (let person of Person.everyone) {
             items.push({
                 text: person.displayName,
                 onclick: `Interface.select(${person.id});`,
-                class: (person === this.selectedItem) ? "dropdown-item active" : "dropdown-item"
+                class: (person === Interface.selectedItem) ? "dropdown-item active" : "dropdown-item"
             })
         }
-        this._menu_setItems(menu_select, items);
+        Interface._menu_setItems(menu_select, items);
     }
 
     static _menu_updateActionMenu() {
         let items = [];
-        if (this.selectedItem === null) {
+        if (Interface.selectedItem === null) {
             items.push({ element: "strong", class: "dropdown-header", text: "Bitte wählen Sie zuerst eine Person aus!" });
         } else {
             items.push({ element: "strong", class: "dropdown-header", text: "Umbenennen" });
-            items.push({ element: "div", innerHTML: `<input id="renameinput" class="form-control" placeholder="Umbenennen" oninput="Interface.rename();" value="${this.selectedItem.name}">`});
-            
-            if (this.selectedItem.canBeAlive || this.selectedItem.canDelete) {
+            items.push({ element: "div", innerHTML: `<input id="renameinput" class="form-control" placeholder="Umbenennen" oninput="Interface.rename();" value="${Interface.selectedItem.name}">` });
+
+            if (Interface.selectedItem.canBeAlive || Interface.selectedItem.canDelete) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Ändern" });
-                if (this.selectedItem.canBeAlive) items.push({ text: "Lebend / Tot", onclick: "Interface.toggleAlive();", class: this.selectedItem.alive ? "dropdown-item active" : "dropdown-item" });
-                if (this.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
+                if (Interface.selectedItem.canBeAlive) items.push({ text: "Lebend / Tot", onclick: "Interface.toggleAlive();", class: Interface.selectedItem.alive ? "dropdown-item active" : "dropdown-item" });
+                if (Interface.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
             }
-            if (this.selectedItem.canHaveChildren) {
+            if (Interface.selectedItem.canHaveChildren) {
                 items.push({ element: "div", class: "dropdown-divider" });
 
                 items.push({ element: "strong", class: "dropdown-header", text: "Kind hinzufügen" });
 
                 let other = null;
-                if (Person.root.parent2 && this.selectedItem == Person.root.parent1) {
+                if (Person.root.parent2 && Interface.selectedItem == Person.root.parent1) {
                     other = Person.root.parent2;
-                } else if (Person.root.parent1 && this.selectedItem == Person.root.parent2) {
+                } else if (Person.root.parent1 && Interface.selectedItem == Person.root.parent2) {
                     other = Person.root.parent1;
-                } else if (Person.root.parent1 && Person.root.parent1.parent2 && this.selectedItem == Person.root.parent1.parent1) {
+                } else if (Person.root.parent1 && Person.root.parent1.parent2 && Interface.selectedItem == Person.root.parent1.parent1) {
                     other = Person.root.parent1.parent2;
-                } else if (Person.root.parent1 && Person.root.parent1.parent1 && this.selectedItem == Person.root.parent1.parent2) {
+                } else if (Person.root.parent1 && Person.root.parent1.parent1 && Interface.selectedItem == Person.root.parent1.parent2) {
                     other = Person.root.parent1.parent1;
-                } else if (Person.root.parent2 && Person.root.parent2.parent2 && this.selectedItem == Person.root.parent2.parent1) {
+                } else if (Person.root.parent2 && Person.root.parent2.parent2 && Interface.selectedItem == Person.root.parent2.parent1) {
                     other = Person.root.parent2.parent2;
-                } else if (Person.root.parent2 && Person.root.parent2.parent1 && this.selectedItem == Person.root.parent2.parent2) {
+                } else if (Person.root.parent2 && Person.root.parent2.parent1 && Interface.selectedItem == Person.root.parent2.parent2) {
                     other = Person.root.parent2.parent1;
                 }
 
                 if (other) {
-                    items.push({ text: `Kind mit (${other.id}) ${other.name}`, onclick: `Interface.addChild(${this.selectedItem.id},${other.id});` });
-                    items.push({ text: "Kind mit anderer Person", onclick: `Interface.addChild(${this.selectedItem.id});` });
+                    items.push({ text: `Kind mit (${other.id}) ${other.name}`, onclick: `Interface.addChild(${Interface.selectedItem.id},${other.id});` });
+                    items.push({ text: "Kind mit anderer Person", onclick: `Interface.addChild(${Interface.selectedItem.id});` });
                 } else {
-                    items.push({ text: "Neues Kind", onclick: `Interface.addChild(${this.selectedItem.id});` });
+                    items.push({ text: "Neues Kind", onclick: `Interface.addChild(${Interface.selectedItem.id});` });
                 }
             }
         }
-        this._menu_setItems(menu_action, items);
+        Interface._menu_setItems(menu_action, items);
     }
 
     static _menu_updateInfosMenu() {
         let items = [];
-        if (this.selectedItem === null) {
+        if (Interface.selectedItem === null) {
             items.push({ element: "strong", class: "dropdown-header", text: "Bitte wählen Sie zuerst eine Person aus!" });
         } else {
             items.push({ element: "strong", class: "dropdown-header", text: "Generell" });
-            items.push({ class: "dropdown-item disabled", text: `ID: ${this.selectedItem.id}` });
-            items.push({ class: "dropdown-item disabled", text: `Name: ${this.selectedItem.name}` });
-            items.push({ class: "dropdown-item disabled", text: "Status: " + (this.selectedItem.alive ? "Lebend" : "Tot") });
-            
-            if (this.selectedItem.alive) {
+            items.push({ class: "dropdown-item disabled", text: `ID: ${Interface.selectedItem.id}` });
+            items.push({ class: "dropdown-item disabled", text: `Name: ${Interface.selectedItem.name}` });
+            items.push({ class: "dropdown-item disabled", text: "Status: " + (Interface.selectedItem.alive ? "Lebend" : "Tot") });
+
+            if (Interface.selectedItem.alive) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Erbanteil" });
-                items.push({ class: "dropdown-item disabled", text: `Relativ: ${this.selectedItem.share_percent*100}%` });
-                items.push({ class: "dropdown-item disabled", text: `Absolut: ${this.selectedItem.share_absolute} CHF` });
-                items.push({ class: "dropdown-item disabled", text: `Min. Relativ: ${this.selectedItem.min_share_percent*100}%` });
-                items.push({ class: "dropdown-item disabled", text: `Min. Absolut: ${this.selectedItem.min_share_absolute} CHF` });
-            } else if (this.selectedItem === Person.root) {
+                items.push({ class: "dropdown-item disabled", text: `Relativ: ${Interface.selectedItem.share_percent * 100}%` });
+                items.push({ class: "dropdown-item disabled", text: `Absolut: ${Interface.selectedItem.share_absolute} CHF` });
+                items.push({ class: "dropdown-item disabled", text: `Min. Relativ: ${Interface.selectedItem.min_share_percent * 100}%` });
+                items.push({ class: "dropdown-item disabled", text: `Min. Absolut: ${Interface.selectedItem.min_share_absolute} CHF` });
+            } else if (Interface.selectedItem === Person.root) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Freie Quote" });
                 items.push({ class: "dropdown-item disabled", text: `Relativ: ${Person.free_quota_percent * 100}%` });
                 items.push({ class: "dropdown-item disabled", text: `Absolut: ${Person.free_quota_absolute} CHF` });
             }
 
-            if (this.selectedItem.parent1 || this.selectedItem.parent2) {
+            if (Interface.selectedItem.parent1 || Interface.selectedItem.parent2) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Eltern" });
-                if (this.selectedItem.parent1) items.push({ text: this.selectedItem.parent1.displayName, onclick: `Interface.select(${this.selectedItem.parent1.id});` });
-                if (this.selectedItem.parent2) items.push({ text: this.selectedItem.parent2.displayName, onclick: `Interface.select(${this.selectedItem.parent2.id});` });
+                if (Interface.selectedItem.parent1) items.push({ text: Interface.selectedItem.parent1.displayName, onclick: `Interface.select(${Interface.selectedItem.parent1.id});` });
+                if (Interface.selectedItem.parent2) items.push({ text: Interface.selectedItem.parent2.displayName, onclick: `Interface.select(${Interface.selectedItem.parent2.id});` });
             }
 
-            if (this.selectedItem.children.length > 0) {
+            if (Interface.selectedItem.children.length > 0) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Kinder" });
-                for (let child of this.selectedItem.children) {
+                for (let child of Interface.selectedItem.children) {
                     items.push({ text: child.displayName, onclick: `Interface.select(${child.id});` });
                 }
             }
         }
-        this._menu_setItems(menu_infos, items);
+        Interface._menu_setItems(menu_infos, items);
     }
 
     // Actions
 
     static select(itemid) {
-        this.selectedItem = Person.everyone[itemid];
-        this.update();
+        Interface.selectedItem = Person.everyoneById[itemid];
+        Interface.update();
     }
 
     static delete() {
-        this.selectedItem.delete();
-        this.selectedItem = null;
-        this.update();
+        Interface.selectedItem.delete();
+        Interface.selectedItem = null;
+        Interface.update();
     }
 
     static rename() {
-        this.selectedItem.name = document.getElementById("renameinput").value;
-        this._menu_updateSelectMenu();
-        this._menu_updateInfosMenu();
+        Interface.selectedItem.name = document.getElementById("renameinput").value;
+        Interface._menu_updateSelectMenu();
+        Interface._menu_updateInfosMenu();
     }
 
     static toggleAlive() {
-        this.selectedItem.alive = !this.selectedItem.alive;
-        this.update();
+        Interface.selectedItem.alive = !Interface.selectedItem.alive;
+        Interface.update();
     }
 
-    static addChild(p1id, p2id=null) {
+    static addChild(p1id, p2id = null) {
         let child = new Person("Neues Kind", true);
-        let parent1 = Person.everyone[p1id];
-        let parent2 = p2id === null ? null : Person.everyone[p2id];
+        let parent1 = Person.everyoneById[p1id];
+        let parent2 = p2id === null ? null : Person.everyoneById[p2id];
         parent1.addChild(child, parent2);
-        this.select(child.id);
+        Interface.select(child.id);
     }
 
     // Draw
@@ -485,7 +489,7 @@ class FamilyTree {
         FamilyTree.stage.height(FamilyTree.STAGEHEIGHT * scale);
         FamilyTree.stage.scale({ x: scale, y: scale });
         FamilyTree.stage.draw();
-      }
+    }
 
     static setup() {
         var layer = new Konva.Layer();
