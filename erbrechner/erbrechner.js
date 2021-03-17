@@ -63,6 +63,15 @@ class Person {
         this.free_quota_absolute = this.free_quota_percent * amount;
     }
 
+    static json() {
+        return {
+            everyone: Person.everyone.map(p => p.json()),
+            root_id: Person.root.id,
+            free_quota_percent: Person.free_quota_percent,
+            free_quota_absolute: Person.free_quota_absolute,
+        }
+    }
+
     // Constructor
 
     constructor(name, alive, isroot = false) {
@@ -189,6 +198,23 @@ class Person {
             child.deleteRecursive();
         }
         Person.everyone.splice(this.id, 1);
+    }
+
+    json() {
+        return {
+            id: this.id,
+            name: this.name,
+            alive: this.alive,
+            generation: this.generation,
+            share_percent: this.share_percent,
+            share_absolute: this.share_absolute,
+            min_share_percent: this.min_share_percent,
+            min_share_absolute: this.min_share_absolute,
+            
+            parent1_id: this.parent1 ? this.parent1.id : null,
+            parent2_id: this.parent2 ? this.parent2.id : null,
+            children_ids: this.children.map(c => c.id),
+        }
     }
 
     /// Distribution
@@ -489,7 +515,7 @@ class FamilyTree {
 window.addEventListener('load', FamilyTree.fitStageIntoParentContainer);
 window.addEventListener('resize', FamilyTree.fitStageIntoParentContainer);
 
-///// Basic
+///// Basic Family
 
 p = new Person("Ich", false, true)
 p.partner = new Person("Ehepartner", false)
