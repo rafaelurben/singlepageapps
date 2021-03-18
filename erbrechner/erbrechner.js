@@ -435,7 +435,7 @@ class Interface {
     }
 
     static addChild(p1id, p2id = null) {
-        let child = new Person("Neues Kind", true);
+        let child = new Person(p2id !== null ? `Neues Kind von (${p1id}) und (${p2id})` : `Neues Kind von (${p1id})`, true);
         let parent1 = Person.everyoneById[p1id];
         let parent2 = p2id === null ? null : Person.everyoneById[p2id];
         parent1.addChild(child, parent2);
@@ -531,6 +531,21 @@ class FamilyTreePerson {
         FamilyTreePerson.layer.add(this.group);
     }
 
+    get parent1() {
+        if (this.person.parent1 && FamilyTreePerson.everyoneById.hasOwnProperty(this.person.parent1.id)) {
+            return FamilyTreePerson.everyoneById[this.person.parent1.id];
+        } else {
+            return null;
+        }
+    }
+
+    get parent2() {
+        if (this.person.parent2 && FamilyTreePerson.everyoneById.hasOwnProperty(this.person.parent2.id)) {
+            return FamilyTreePerson.everyoneById[this.person.parent2.id];
+        } else {
+            return null;
+        }
+    }
 
     get information() {
         if (this.person.isRoot) {
@@ -539,6 +554,9 @@ class FamilyTreePerson {
             return `Erbanteil:\n  Relativ: ${this.person.share_percent*100}%\n  Absolut: ${this.person.share_absolute} CHF\n  Min. Relativ: ${this.person.min_share_percent*100}%\n  Min. Absolut: ${this.person.min_share_absolute} CHF`;
         }
     }   
+
+    updateLines() {
+    }
 
     update() {
         this.text_title.text(`${this.person.id} ${this.person.name}`);
