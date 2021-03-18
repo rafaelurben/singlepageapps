@@ -416,6 +416,7 @@ class Interface {
     }
 
     static delete() {
+        FamilyTreePerson.deleteById(Interface.selectedItem.id);
         Interface.selectedItem.delete();
         Interface.selectedItem = null;
         Interface.update();
@@ -425,6 +426,7 @@ class Interface {
         Interface.selectedItem.name = document.getElementById("renameinput").value;
         Interface._menu_updateSelectMenu();
         Interface._menu_updateInfosMenu();
+        FamilyTreePerson.updateById(Interface.selectedItem.id);
     }
 
     static toggleAlive() {
@@ -440,9 +442,6 @@ class Interface {
         Interface.select(child.id);
     }
 
-    // Draw
-
-
     // General
 
     static update() {
@@ -450,6 +449,7 @@ class Interface {
         Interface._menu_updateSelectMenu();
         Interface._menu_updateActionMenu();
         Interface._menu_updateInfosMenu();
+        FamilyTreePerson.updateAll();
     }
 
     // Events
@@ -470,8 +470,75 @@ document.onfullscreenchange = Interface.onfullscreenchange;
 
 ///// FamilyTree
 
+class FamilyTreePerson {
+    static layer = new Konva.Layer();
+    static everyoneById = {};
+
+    static updateAll() {
+        for (let id in Person.everyoneById) {
+            if (FamilyTreePerson.everyoneById.hasOwnProperty(id)) {
+                FamilyTreePerson.everyoneById[id].update();
+            } else {
+                new FamilyTreePerson(Person.everyoneById[id]);
+            }
+        }
+        FamilyTreePerson.layer.draw();
+    }
+
+    static deleteById(id) {
+        FamilyTreePerson.everyoneById[id].delete();
+    }
+
+    static updateById(id) {
+        FamilyTreePerson.everyoneById[id].update();
+    }
+
+    // static createArrow(object1, object2) {
+
+    // }
+
+    constructor (person) {
+        this.person = person;
+        this.group = new Konva.Group({
+            x: 0,
+            y: (person.generation + 2) * 200,
+            draggable: true,
+        })
+
+        this.rect = new Konva.Rect({
+            x: 0, y: 0, width: 400, height: 180, 
+            fill: "orange", stroke: "white", strokeWidth: 2,
+            cornerRadius: 10,
+        })
+        this.group.add(this.rect);
+
+        this.text_info = new Konva.Text({
+            x: 10, y: 10, text: `Loading...`, fontSize: 25, fill: "white",
+        })
+        this.group.add(this.text_info);
+
+        FamilyTreePerson.everyoneById[this.person.id] = this;
+        this.update();
+        FamilyTreePerson.layer.add(this.group);
+    }
+
+    update() {
+        this.text_info.text(`${this.person.id} ${this.person.name}`);
+        this.rect.fill(this.person.isRoot ? "#2E86AB" : (this.person.isPartner ? "#AF3B6E" : (this.person.alive ? "#6B7FD7" : "#4C2A85")));
+        this.rect.stroke(this.person === Interface.selectedItem ? "red" : "white");
+        this.rect.strokeWidth(this.person === Interface.selectedItem ? 5 : 2);
+    }
+
+    delete() {
+        this.text_info.destroy();
+        this.rect.destroy();
+        this.group.destroy();
+        delete FamilyTreePerson.everyoneById[this.person.id];
+    }
+}
+
 class FamilyTree {
-    static STAGEWIDTH = 4000;
+    static STAGEWIDTH = 2000;
     static STAGEHEIGHT = 2000;
     static stage = new Konva.Stage({
         container: 'canvascontainer',
@@ -480,7 +547,11 @@ class FamilyTree {
         draggable: true,
     })
 
+    /// Events
+
     static fitStageIntoParentContainer() {
+        console.log("FamilyTree.fitStageIntoParentContainer");
+        
         var container = document.querySelector('#canvascontainer');
         var containerWidth = container.offsetWidth;
         var scale = containerWidth / FamilyTree.STAGEWIDTH;
@@ -490,34 +561,13 @@ class FamilyTree {
         FamilyTree.stage.scale({ x: scale, y: scale });
         FamilyTree.stage.draw();
     }
-
-    static setup() {
-        var layer = new Konva.Layer();
-        FamilyTree.stage.add(layer);
-
-        var WIDTH = FamilyTree.STAGEWIDTH;
-        var HEIGHT = FamilyTree.STAGEHEIGHT;
-        var NUMBER = 200;
-
-        function generateNode() {
-            return new Konva.Circle({
-                x: WIDTH * Math.random(),
-                y: HEIGHT * Math.random(),
-                radius: 50,
-                fill: 'red',
-                stroke: 'black',
-            });
-        }
-
-        for (var i = 0; i < NUMBER; i++) {
-            layer.add(generateNode());
-        }
-        layer.draw();
-    }
 }
+
+FamilyTree.stage.add(FamilyTreePerson.layer);
 
 window.addEventListener('load', FamilyTree.fitStageIntoParentContainer);
 window.addEventListener('resize', FamilyTree.fitStageIntoParentContainer);
+window.addEventListener('load', FamilyTreePerson.updateAll);
 
 ///// Basic Family
 
