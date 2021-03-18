@@ -146,12 +146,12 @@ class Person {
         return (Person.root !== this && Person.root.partner !== this && this.generation !== -2 && !(this.generation === -1 && ((Person.root.parent1 && Person.root.parent1 === this) || (Person.root.parent2 && Person.root.parent2 === this))));
     }
 
-    get canHaveChildren() {
-        return Person.root.partner !== this;
+    get isPartner() {
+        return Person.root.partner === this;
     }
 
-    get canBeAlive() {
-        return Person.root !== this;
+    get isRoot() {
+        return Person.root === this;
     }
 
     get displayName() {
@@ -329,13 +329,13 @@ class Interface {
             items.push({ element: "strong", class: "dropdown-header", text: "Umbenennen" });
             items.push({ element: "div", innerHTML: `<input id="renameinput" class="form-control" placeholder="Umbenennen" oninput="Interface.rename();" value="${Interface.selectedItem.name}">` });
 
-            if (Interface.selectedItem.canBeAlive || Interface.selectedItem.canDelete) {
+            if (!Interface.selectedItem.isRoot || Interface.selectedItem.canDelete) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Ändern" });
-                if (Interface.selectedItem.canBeAlive) items.push({ text: "Lebend / Tot", onclick: "Interface.toggleAlive();", class: Interface.selectedItem.alive ? "dropdown-item active" : "dropdown-item" });
+                if (!Interface.selectedItem.isRoot) items.push({ text: "Lebend / Tot", onclick: "Interface.toggleAlive();", class: Interface.selectedItem.alive ? "dropdown-item active" : "dropdown-item" });
                 if (Interface.selectedItem.canDelete) items.push({ text: "Löschen (inkl. Nachkommen)", onclick: "Interface.delete();" });
             }
-            if (Interface.selectedItem.canHaveChildren) {
+            if (!Interface.selectedItem.isPartner) { // Allow children for everyone except partner
                 items.push({ element: "div", class: "dropdown-divider" });
 
                 items.push({ element: "strong", class: "dropdown-header", text: "Kind hinzufügen" });
