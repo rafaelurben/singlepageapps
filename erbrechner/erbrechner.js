@@ -554,6 +554,9 @@ class FamilyTreePerson {
         this.rect.destroy();
         this.group.destroy();
         delete FamilyTreePerson.everyoneById[this.person.id];
+        for (let child of this.person.children) {
+            FamilyTreePerson.deleteById(child.id);
+        }
     }
 }
 
