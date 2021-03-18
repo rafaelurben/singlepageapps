@@ -581,12 +581,37 @@ class FamilyTreePerson {
 class FamilyTree {
     static STAGEWIDTH = 2000;
     static STAGEHEIGHT = 2000;
+    static ZOOMSPEED = 1.01;
     static stage = new Konva.Stage({
         container: 'canvascontainer',
         width: this.STAGEWIDTH,
         height: this.STAGEHEIGHT,
         draggable: true,
     })
+
+    /// Methods
+
+    static zoom(direction, speed) {
+        var oldScale = FamilyTree.stage.scaleX();
+
+        var pointer = FamilyTree.stage.getPointerPosition();
+
+        var mousePointTo = {
+            x: (pointer.x - FamilyTree.stage.x()) / oldScale,
+            y: (pointer.y - FamilyTree.stage.y()) / oldScale,
+        };
+
+        var newScale = direction ? oldScale * (speed || FamilyTree.ZOOMSPEED) : oldScale / (speed || FamilyTree.ZOOMSPEED);
+
+        FamilyTree.stage.scale({ x: newScale, y: newScale });
+
+        var newPos = {
+            x: pointer.x - mousePointTo.x * newScale,
+            y: pointer.y - mousePointTo.y * newScale,
+        };
+        FamilyTree.stage.position(newPos);
+        FamilyTree.stage.batchDraw();
+    }
 
     /// Events
 
@@ -602,8 +627,14 @@ class FamilyTree {
         FamilyTree.stage.scale({ x: scale, y: scale });
         FamilyTree.stage.draw();
     }
+
+    static onWheel(e) {
+        e.evt.preventDefault(); 
+        FamilyTree.zoom(e.evt.deltaY < 0);
+    }
 }
 
+FamilyTree.stage.on('wheel', FamilyTree.onWheel);
 FamilyTree.stage.add(FamilyTreePerson.layer);
 
 window.addEventListener('load', FamilyTree.fitStageIntoParentContainer);
