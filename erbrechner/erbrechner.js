@@ -501,9 +501,13 @@ class FamilyTreePerson {
         this.person = person;
         this.group = new Konva.Group({
             x: 0,
-            y: (person.generation + 2) * 200,
+            y: (person.generation + 2) * 220,
             draggable: true,
+            dragBoundFunc: pos => {
+                return { x: pos.x, y: this.group.absolutePosition().y }
+            }
         })
+        this.group.on('click', () => { Interface.select(this.person.id); });
 
         this.rect = new Konva.Rect({
             x: 0, y: 0, width: 400, height: 180, 
@@ -512,8 +516,13 @@ class FamilyTreePerson {
         })
         this.group.add(this.rect);
 
-        this.text_info = new Konva.Text({
+        this.text_title = new Konva.Text({
             x: 10, y: 10, text: `Loading...`, fontSize: 25, fill: "white",
+        })
+        this.group.add(this.text_title);
+
+        this.text_info = new Konva.Text({
+            x: 15, y: 40, text: `Loading...`, fontSize: 25, fill: "black",
         })
         this.group.add(this.text_info);
 
@@ -522,14 +531,25 @@ class FamilyTreePerson {
         FamilyTreePerson.layer.add(this.group);
     }
 
+
+    get information() {
+        if (this.person.isRoot) {
+            return `Freie Quote:\n  Relativ: ${Person.free_quota_percent*100}%\n  Absolut: ${Person.free_quota_absolute} CHF`;
+        } else {
+            return `Erbanteil:\n  Relativ: ${this.person.share_percent*100}%\n  Absolut: ${this.person.share_absolute} CHF\n  Min. Relativ: ${this.person.min_share_percent*100}%\n  Min. Absolut: ${this.person.min_share_absolute} CHF`;
+        }
+    }   
+
     update() {
-        this.text_info.text(`${this.person.id} ${this.person.name}`);
-        this.rect.fill(this.person.isRoot ? "#2E86AB" : (this.person.isPartner ? "#AF3B6E" : (this.person.alive ? "#6B7FD7" : "#4C2A85")));
+        this.text_title.text(`${this.person.id} ${this.person.name}`);
+        this.text_info.text(this.information);
+        this.rect.fill(this.person.isRoot ? "#2E86AB" : (this.person.alive ? (this.person.isPartner ? "#AF3B6E" : "#6B7FD7") : "#4C2A85"));
         this.rect.stroke(this.person === Interface.selectedItem ? "red" : "white");
         this.rect.strokeWidth(this.person === Interface.selectedItem ? 5 : 2);
     }
 
     delete() {
+        this.text_title.destroy();
         this.text_info.destroy();
         this.rect.destroy();
         this.group.destroy();
