@@ -17,7 +17,7 @@
 <body>
     <div id="app">
         <nav id="menubar" class="navbar navbar-expand-lg navbar-dark bg-dark">
-            <a class="navbar-brand" href="#">Erbrechner</a>
+            <a tabIndex="-1" class="navbar-brand" href="#">Erbrechner</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainmenubar">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -47,6 +47,17 @@
                             <!-- Added by JavaScript -->
                         </div>
                     </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+                            Ansicht
+                        </a>
+                        <div id="menu_infos" class="dropdown-menu dropdown-menu-dark">
+                            <strong class="dropdown-header">Zoom</strong>
+                            <a class="dropdown-item" href="#" onclick="FamilyTree.zoom(true, 1.25);">Zoom +</a>
+                            <a class="dropdown-item" href="#" onclick="FamilyTree.zoom(false, 1.25);">Zoom -</a>
+                            <a class="dropdown-item" href="#" onclick="FamilyTree.zoomAbsolute(1);">Reset Zoom</a>
+                        </div>
+                    </li>
                 </ul>
                 <div class="form-inline ms-auto">
                     <div class="input-group">
@@ -69,7 +80,7 @@
                             <a target="_blank" class="dropdown-item"
                                 href="https://github.com/rafaelurben/singlepageapps/tree/master/erbrechner">Quellcode</a>
                             <div class="dropdown-divider"></div>
-                            <a zIndex="-1" class="dropdown-item disabled">v1 - 2021/03/19</a>
+                            <a zIndex="-1" class="dropdown-item disabled">v1.1 - 2021/03/19</a>
                             <a zIndex="-1" class="dropdown-item disabled">© Rafael Urben</a>
                         </div>
                     </li>

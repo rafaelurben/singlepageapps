@@ -300,7 +300,7 @@ class Interface {
             elem.setAttribute("href", "#");
 
             for (let attr in item) {
-                if (!["innerHTML", "text"].includes(attr)) elem.setAttribute(attr, item[attr]);
+                if (!["innerHTML", "text", "element"].includes(attr)) elem.setAttribute(attr, item[attr]);
             }
 
             menu.appendChild(elem);
@@ -508,6 +508,13 @@ class FamilyTreePerson {
             }
         })
         this.group.on('click', () => { Interface.select(this.person.id); });
+        this.group.on('dblclick', () => { Interface.select(this.person.id); Interface.toggleAlive(); });
+        // this.group.on('dragmove', () => { this.updateLines(); });
+
+        // this.line_parent1 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
+        // FamilyTreePerson.layer.add(this.line_parent1);
+        // this.line_parent2 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
+        // FamilyTreePerson.layer.add(this.line_parent2);
 
         this.rect = new Konva.Rect({
             x: 0, y: 0, width: 400, height: 180, 
@@ -552,7 +559,11 @@ class FamilyTreePerson {
             return `Freie Quote:\n  Relativ: ${Person.free_quota_percent*100}%\n  Absolut: ${Person.free_quota_absolute} CHF`;
         } else if (this.person.alive) {
             if (this.person.share_percent) {
-                return `Erbanteil:\n  Relativ: ${this.person.share_percent*100}%\n  Absolut: ${this.person.share_absolute} CHF\n  Min. Relativ: ${this.person.min_share_percent*100}%\n  Min. Absolut: ${this.person.min_share_absolute} CHF`;
+                if (this.person.min_share_percent) {
+                    return `Erbanteil:\n  Relativ: ${this.person.share_percent*100}%\n  Absolut: ${this.person.share_absolute} CHF\n  Min. Relativ: ${this.person.min_share_percent*100}%\n  Min. Absolut: ${this.person.min_share_absolute} CHF`;
+                } else {
+                    return `Erbanteil:\n  Relativ: ${this.person.share_percent * 100}%\n  Absolut: ${this.person.share_absolute} CHF`;
+                }
             } else {
                 return `Nicht erbberechtigt`;
             }
@@ -560,10 +571,32 @@ class FamilyTreePerson {
             return `Tot`;
         }
     }   
-        }
-    }   
 
     updateLines() {
+        // if (this.parent1) {
+        //     let parent1 = this.parent1;
+        //     // parent1.group.on('dragmove', () => { this.updateLines(); });
+        //     let ap_g = this.rect.absolutePosition();
+        //     let ap_p = parent1.rect.absolutePosition();
+        //     console.log(ap_g, ap_p);
+        //     console.log(this.rect, parent1.rect);
+        //     let points = [
+        //         ap_g.x + (this.rect.width() / 2), ap_g.y,
+        //         ap_g.x + (this.rect.width() / 2), (ap_g.y - ap_p.y + parent1.rect.height()) / 2,
+        //         ap_p.x + (parent1.rect.width() / 2), (ap_g.y - ap_p.y + parent1.rect.height()) / 2,
+        //         ap_p.x + (parent1.rect.width() / 2), ap_p.y,
+        //     ];
+        //     console.log(points);
+        //     this.line_parent1.points(points);
+        //     this.line_parent1.visible(true);
+        // } else {
+        //     this.line_parent1.visible(false);
+        // }
+        // if (this.parent2) {
+        //     this.line_parent2.visible(true);
+        // } else {
+        //     this.line_parent2.visible(false);
+        // }
     }
 
     update() {
@@ -578,6 +611,8 @@ class FamilyTreePerson {
         this.text_title.destroy();
         this.text_info.destroy();
         this.rect.destroy();
+        // this.line_parent1.destroy();
+        // this.line_parent2.destroy();
         this.group.destroy();
         delete FamilyTreePerson.everyoneById[this.person.id];
         for (let child of this.person.children) {
@@ -621,6 +656,10 @@ class FamilyTree {
         FamilyTree.stage.batchDraw();
     }
 
+    static zoomAbsolute(scale) {
+        FamilyTree.zoom(true, scale / FamilyTree.stage.scaleX());
+    }
+
     /// Events
 
     static fitStageIntoParentContainer() {
@@ -647,7 +686,6 @@ FamilyTree.stage.add(FamilyTreePerson.layer);
 
 window.addEventListener('load', FamilyTree.fitStageIntoParentContainer);
 window.addEventListener('resize', FamilyTree.fitStageIntoParentContainer);
-window.addEventListener('load', FamilyTreePerson.updateAll);
 
 ///// Basic Family
 
@@ -663,3 +701,21 @@ p.parent2.setParent1(new Person("Grossvater (maternal)", false))
 p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
 
 Interface.select(0);
+
+///// OnLoad
+
+window.addEventListener('load', () => {
+    FamilyTreePerson.updateAll();
+    FamilyTreePerson.everyoneById[0].group.move({ x: 650, y: 0 });
+    FamilyTreePerson.everyoneById[1].group.move({ x: 1090, y: 0 });
+
+    FamilyTreePerson.everyoneById[2].group.move({ x: 210, y: 0 });
+    FamilyTreePerson.everyoneById[3].group.move({ x: 0, y: 0 });
+    FamilyTreePerson.everyoneById[4].group.move({ x: 420, y: 0 });
+
+    FamilyTreePerson.everyoneById[5].group.move({ x: 1090, y: 0 });
+    FamilyTreePerson.everyoneById[6].group.move({ x: 880, y: 0 });
+    FamilyTreePerson.everyoneById[7].group.move({ x: 1300, y: 0 });
+
+    FamilyTree.stage.batchDraw();
+});
