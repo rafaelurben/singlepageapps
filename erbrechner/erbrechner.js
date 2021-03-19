@@ -372,22 +372,22 @@ class Interface {
             items.push({ element: "strong", class: "dropdown-header", text: "Bitte wählen Sie zuerst eine Person aus!" });
         } else {
             items.push({ element: "strong", class: "dropdown-header", text: "Generell" });
-            items.push({ class: "dropdown-item disabled", text: `ID: ${Interface.selectedItem.id}` });
-            items.push({ class: "dropdown-item disabled", text: `Name: ${Interface.selectedItem.name}` });
-            items.push({ class: "dropdown-item disabled", text: "Status: " + (Interface.selectedItem.alive ? "Lebend" : "Tot") });
+            items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `ID: ${Interface.selectedItem.id}` });
+            items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Name: ${Interface.selectedItem.name}` });
+            items.push({ tabIndex: -1, class: "dropdown-item disabled", text: "Status: " + (Interface.selectedItem.alive ? "Lebend" : "Tot") });
 
             if (Interface.selectedItem.alive) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Erbanteil" });
-                items.push({ class: "dropdown-item disabled", text: `Relativ: ${Interface.selectedItem.share_percent * 100}%` });
-                items.push({ class: "dropdown-item disabled", text: `Absolut: ${Interface.selectedItem.share_absolute} CHF` });
-                items.push({ class: "dropdown-item disabled", text: `Min. Relativ: ${Interface.selectedItem.min_share_percent * 100}%` });
-                items.push({ class: "dropdown-item disabled", text: `Min. Absolut: ${Interface.selectedItem.min_share_absolute} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${Interface.selectedItem.share_percent * 100}%` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${Interface.selectedItem.share_absolute} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Relativ: ${Interface.selectedItem.min_share_percent * 100}%` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Absolut: ${Interface.selectedItem.min_share_absolute} CHF` });
             } else if (Interface.selectedItem === Person.root) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Freie Quote" });
-                items.push({ class: "dropdown-item disabled", text: `Relativ: ${Person.free_quota_percent * 100}%` });
-                items.push({ class: "dropdown-item disabled", text: `Absolut: ${Person.free_quota_absolute} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${Person.free_quota_percent * 100}%` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${Person.free_quota_absolute} CHF` });
             }
 
             if (Interface.selectedItem.parent1 || Interface.selectedItem.parent2) {
@@ -550,8 +550,16 @@ class FamilyTreePerson {
     get information() {
         if (this.person.isRoot) {
             return `Freie Quote:\n  Relativ: ${Person.free_quota_percent*100}%\n  Absolut: ${Person.free_quota_absolute} CHF`;
+        } else if (this.person.alive) {
+            if (this.person.share_percent) {
+                return `Erbanteil:\n  Relativ: ${this.person.share_percent*100}%\n  Absolut: ${this.person.share_absolute} CHF\n  Min. Relativ: ${this.person.min_share_percent*100}%\n  Min. Absolut: ${this.person.min_share_absolute} CHF`;
+            } else {
+                return `Nicht erbberechtigt`;
+            }
         } else {
-            return `Erbanteil:\n  Relativ: ${this.person.share_percent*100}%\n  Absolut: ${this.person.share_absolute} CHF\n  Min. Relativ: ${this.person.min_share_percent*100}%\n  Min. Absolut: ${this.person.min_share_absolute} CHF`;
+            return `Tot`;
+        }
+    }   
         }
     }   
 
@@ -643,7 +651,7 @@ window.addEventListener('load', FamilyTreePerson.updateAll);
 
 ///// Basic Family
 
-p = new Person("Ich", false, true)
+p = new Person("Hauptperson", false, true)
 p.partner = new Person("Ehepartner", false)
 
 p.setParent1(new Person("Vater", true))
