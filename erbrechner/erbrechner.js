@@ -282,7 +282,8 @@ let menu_select = document.getElementById("menu_select");
 let menu_infos = document.getElementById("menu_infos");
 
 class Interface {
-    static selectedItem = null
+    static selectedItem = null;
+    static actionDropdown = new bootstrap.Dropdown(document.getElementById("menu_action_toggle"));
 
     static fullscreen() {
         app.requestFullscreen();
@@ -493,10 +494,6 @@ class FamilyTreePerson {
         FamilyTreePerson.everyoneById[id].update();
     }
 
-    // static createArrow(object1, object2) {
-
-    // }
-
     constructor (person) {
         this.person = person;
         this.group = new Konva.Group({
@@ -509,12 +506,15 @@ class FamilyTreePerson {
         })
         this.group.on('click', () => { Interface.select(this.person.id); });
         this.group.on('dblclick', () => { Interface.select(this.person.id); Interface.toggleAlive(); });
+        this.group.on('contextmenu', e => { e.evt.preventDefault(); Interface.select(this.person.id); Interface.actionDropdown.show(); });
         this.group.on('dragmove', () => { this.updateLines(); });
 
         this.line_parent1 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
         FamilyTreePerson.layer.add(this.line_parent1);
         this.line_parent2 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
         FamilyTreePerson.layer.add(this.line_parent2);
+        this.line_partner = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
+        FamilyTreePerson.layer.add(this.line_partner);
 
         this.rect = new Konva.Rect({
             x: 0, y: 0, width: 400, height: 180, 
@@ -549,6 +549,14 @@ class FamilyTreePerson {
     get parent2() {
         if (this.person.parent2 && FamilyTreePerson.everyoneById.hasOwnProperty(this.person.parent2.id)) {
             return FamilyTreePerson.everyoneById[this.person.parent2.id];
+        } else {
+            return null;
+        }
+    }
+
+    get partner() {
+        if (this.person.partner && FamilyTreePerson.everyoneById.hasOwnProperty(this.person.partner.id)) {
+            return FamilyTreePerson.everyoneById[this.person.partner.id];
         } else {
             return null;
         }
@@ -595,6 +603,25 @@ class FamilyTreePerson {
         } else {
             this.line_parent2.visible(false);
         }
+        if (this.partner) {
+            let partner = this.partner;
+            let ap_g = this.rect.absolutePosition();
+            let ap_p = partner.rect.absolutePosition();
+            let deltaX = (ap_g.x - ap_p.x) / FamilyTree.stage.scaleX();
+            if (Math.abs(deltaX) > 400) {
+                let y = ap_g.y + (this.rect.height() * FamilyTree.stage.scaleY() / 2);
+                let w = this.rect.width() * FamilyTree.stage.scaleX();
+                FamilyTree.straightLine(this.line_partner,
+                    deltaX > 0 ? ap_g.x + w : ap_g.x, y,
+                    deltaX > 0 ? ap_p.x : ap_p.x + w, y,
+                )
+                this.line_partner.visible(true);
+            } else {
+                this.line_partner.visible(false);
+            }
+        } else {
+            this.line_partner.visible(false);
+        }
     }
 
     update() {
@@ -603,9 +630,11 @@ class FamilyTreePerson {
         this.rect.fill(this.person.isRoot ? "#2E86AB" : (this.person.alive ? (this.person.isPartner ? "#AF3B6E" : "#6B7FD7") : "#4C2A85"));
         this.rect.stroke(this.person === Interface.selectedItem ? "red" : "white");
         this.rect.strokeWidth(this.person === Interface.selectedItem ? 5 : 2);
+        this.line_partner.stroke(this.person.partner && this.person.partner.alive ? "#32fc05" : "gray");
         this.updateLines();
         if (this.parent1) this.parent1.group.on('dragmove', () => { this.updateLines(); });
         if (this.parent2) this.parent2.group.on('dragmove', () => { this.updateLines(); });
+        if (this.partner) this.partner.group.on('dragmove', () => { this.updateLines(); });
     }
 
     delete() {
@@ -663,19 +692,30 @@ class FamilyTree {
 
     /// Tools
 
-    static zigzagLine(line, x1, y1, x2, y2) {
-        let scaleX = FamilyTree.stage.scaleX();
-        let scaleY = FamilyTree.stage.scaleY();
-        let offsetX = FamilyTree.stage.x() / scaleX;
-        let offsetY = FamilyTree.stage.y() / scaleY;
-        let y3 = (y1 - Math.abs(y2 - y1) / 2);
+    static getCoordX(x) {
+        return (x - FamilyTree.stage.x()) / FamilyTree.stage.scaleX();
+    }
+
+    static getCoordY(y) {
+        return (y - FamilyTree.stage.y()) / FamilyTree.stage.scaleY();
+    }
+
+    static zigzagLine(line, xa, ya, xb, yb) {
+        let x1 = FamilyTree.getCoordX(xa);
+        let x3 = FamilyTree.getCoordX(xb);
+        let y1 = FamilyTree.getCoordY(ya);
+        let y2 = FamilyTree.getCoordY(ya - Math.abs(yb - ya) / 2);
+        let y3 = FamilyTree.getCoordY(yb);
+        let points = [x1, y1, x1, y2, x3, y2, x3, y3];
+        line.points(points);
+        line.visible(true);
+    }
+
+    static straightLine(line, x1, y1, x2, y2) {
         let points = [
-            x1 / scaleX - offsetX, y1 / scaleY - offsetY,
-            x1 / scaleX - offsetX, y3 / scaleY - offsetY,
-            x2 / scaleX - offsetX, y3 / scaleY - offsetY,
-            x2 / scaleX - offsetX, y2 / scaleY - offsetY,
+            FamilyTree.getCoordX(x1), FamilyTree.getCoordY(y1),
+            FamilyTree.getCoordX(x2), FamilyTree.getCoordY(y2),
         ];
-        //console.log(points);
         line.points(points);
         line.visible(true);
     }
