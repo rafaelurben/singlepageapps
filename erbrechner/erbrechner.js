@@ -163,22 +163,23 @@ class Person {
 
     addChild(child, parent2 = null) {
         child.generation = this.generation + 1;
-
-        this.children.push(child);
         child.setParent1(this);
+        if (parent2) child.setParent2(parent2);
+    }
 
-        if (parent2) {
-            parent2.children.push(child);
-            child.setParent2(parent2);
-        };
+    setPartner(partner) {
+        this.partner = partner;
+        this.partner.partner = this;
     }
 
     setParent1(parent) {
+        parent.children.push(this);
         this.parent1 = parent;
         this.parent1.generation = this.generation - 1;
     }
 
     setParent2(parent) {
+        parent.children.push(this);
         this.parent2 = parent;
         this.parent2.generation = this.generation - 1;
     }
@@ -384,7 +385,7 @@ class Interface {
                 items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${Interface.selectedItem.share_absolute} CHF` });
                 items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Relativ: ${Interface.selectedItem.min_share_percent * 100}%` });
                 items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Absolut: ${Interface.selectedItem.min_share_absolute} CHF` });
-            } else if (Interface.selectedItem === Person.root) {
+            } else if (Interface.selectedItem && Interface.selectedItem.isRoot) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Freie Quote" });
                 items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${Person.free_quota_percent * 100}%` });
@@ -436,7 +437,7 @@ class Interface {
     }
 
     static addChild(p1id, p2id = null) {
-        let child = new Person(p2id !== null ? `Neues Kind von (${p1id}) und (${p2id})` : `Neues Kind von (${p1id})`, true);
+        let child = new Person(p2id !== null ? `Kind von (${p1id}) und (${p2id})` : `Kind von (${p1id})`, true);
         let parent1 = Person.everyoneById[p1id];
         let parent2 = p2id === null ? null : Person.everyoneById[p2id];
         parent1.addChild(child, parent2);
@@ -475,7 +476,23 @@ class FamilyTreePerson {
     static layer = new Konva.Layer();
     static everyoneById = {};
 
+    static get everyone() {
+        return Object.values(FamilyTreePerson.everyoneById);
+    }
+
     static updateAll() {
+        /// Reset all styles
+        for (let person of FamilyTreePerson.everyone) {
+            person.line_parent1.stroke("grey");
+            person.line_parent1.strokeWidth(2);
+            person.line_parent2.stroke("grey");
+            person.line_parent2.strokeWidth(2);
+            person.line_partner.stroke("grey");
+            person.line_partner.strokeWidth(2);
+            person.rect.stroke("white");
+            person.rect.strokeWidth(2);
+        }
+        /// Create new people and update old ones
         for (let id in Person.everyoneById) {
             if (FamilyTreePerson.everyoneById.hasOwnProperty(id)) {
                 FamilyTreePerson.everyoneById[id].update();
@@ -513,8 +530,13 @@ class FamilyTreePerson {
         FamilyTreePerson.layer.add(this.line_parent1);
         this.line_parent2 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
         FamilyTreePerson.layer.add(this.line_parent2);
-        this.line_partner = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
-        FamilyTreePerson.layer.add(this.line_partner);
+
+        if (person.isPartner) {
+            this.line_partner = this.partner.line_partner;
+        } else {
+            this.line_partner = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
+            FamilyTreePerson.layer.add(this.line_partner);
+        }
 
         this.rect = new Konva.Rect({
             x: 0, y: 0, width: 400, height: 180, 
@@ -535,8 +557,15 @@ class FamilyTreePerson {
 
         FamilyTreePerson.everyoneById[this.person.id] = this;
         FamilyTreePerson.layer.add(this.group);
+
+        if (this.parent1) {
+            this.group.attrs.x = this.parent1.group.attrs.x;
+        }
+
         this.update();
     }
+
+    /// Relations
 
     get parent1() {
         if (this.person.parent1 && FamilyTreePerson.everyoneById.hasOwnProperty(this.person.parent1.id)) {
@@ -562,6 +591,18 @@ class FamilyTreePerson {
         }
     }
 
+    get children() {
+        let list = [];
+        for(let child of this.person.children) {
+            if (FamilyTreePerson.everyoneById.hasOwnProperty(child.id)) {
+                list.push(FamilyTreePerson.everyoneById[child.id]);
+            }
+        }
+        return list;
+    }
+
+    /// Texts
+
     get information() {
         if (this.person.isRoot) {
             return `Freie Quote:\n  Relativ: ${Person.free_quota_percent*100}%\n  Absolut: ${Person.free_quota_absolute} CHF`;
@@ -580,7 +621,10 @@ class FamilyTreePerson {
         }
     }   
 
+    /// Methods
+
     updateLines() {
+        /// Parent1 line
         if (this.parent1) {
             let parent1 = this.parent1;
             let ap_g = this.rect.absolutePosition();
@@ -592,6 +636,7 @@ class FamilyTreePerson {
         } else {
             this.line_parent1.visible(false);
         }
+        /// Parent2 line
         if (this.parent2) {
             let parent2 = this.parent2;
             let ap_g = this.rect.absolutePosition();
@@ -603,17 +648,19 @@ class FamilyTreePerson {
         } else {
             this.line_parent2.visible(false);
         }
+        /// Partner line
         if (this.partner) {
             let partner = this.partner;
             let ap_g = this.rect.absolutePosition();
             let ap_p = partner.rect.absolutePosition();
             let deltaX = (ap_g.x - ap_p.x) / FamilyTree.stage.scaleX();
             if (Math.abs(deltaX) > 400) {
-                let y = ap_g.y + (this.rect.height() * FamilyTree.stage.scaleY() / 2);
+                let y1 = ap_g.y + (this.rect.height() * FamilyTree.stage.scaleY() / 2);
+                let y2 = ap_p.y + (partner.rect.height() * FamilyTree.stage.scaleY() / 2);
                 let w = this.rect.width() * FamilyTree.stage.scaleX();
                 FamilyTree.straightLine(this.line_partner,
-                    deltaX > 0 ? ap_g.x + w : ap_g.x, y,
-                    deltaX > 0 ? ap_p.x : ap_p.x + w, y,
+                    deltaX < 0 ? ap_g.x + w : ap_g.x, y1,
+                    deltaX < 0 ? ap_p.x : ap_p.x + w, y2,
                 )
                 this.line_partner.visible(true);
             } else {
@@ -628,13 +675,65 @@ class FamilyTreePerson {
         this.text_title.text(`${this.person.id} ${this.person.name}`);
         this.text_info.text(this.information);
         this.rect.fill(this.person.isRoot ? "#2E86AB" : (this.person.alive ? (this.person.isPartner ? "#AF3B6E" : "#6B7FD7") : "#4C2A85"));
-        this.rect.stroke(this.person === Interface.selectedItem ? "red" : "white");
-        this.rect.strokeWidth(this.person === Interface.selectedItem ? 5 : 2);
-        this.line_partner.stroke(this.person.partner && this.person.partner.alive ? "#32fc05" : "gray");
         this.updateLines();
+        
+        /// Add events
         if (this.parent1) this.parent1.group.on('dragmove', () => { this.updateLines(); });
         if (this.parent2) this.parent2.group.on('dragmove', () => { this.updateLines(); });
         if (this.partner) this.partner.group.on('dragmove', () => { this.updateLines(); });
+
+        /// Style for selectedItem
+        if (this.person === Interface.selectedItem) {
+            this.rect.stroke("#fc7805")
+            this.rect.strokeWidth(5);
+
+            /// Style partner
+            if (this.partner) {
+                this.partner.rect.stroke("#fc05cf");
+                this.partner.rect.strokeWidth(5);
+
+                /// Style partner line
+                this.line_partner.stroke("#fc05cf");
+                this.line_partner.strokeWidth(4);
+            }
+
+            /// Style parent1
+            if (this.parent1) {
+                this.parent1.rect.stroke("#32fc05");
+                this.parent1.rect.strokeWidth(5);
+
+                /// Style parent1 line
+                this.line_parent1.stroke("#32fc05");
+                this.line_parent1.strokeWidth(4);
+            }
+
+            /// Style parent2
+            if (this.parent2) {
+                this.parent2.rect.stroke("#32fc05");
+                this.parent2.rect.strokeWidth(5);
+
+                /// Style parent2 line
+                this.line_parent2.stroke("#32fc05");
+                this.line_parent2.strokeWidth(4);
+            };
+
+            /// Style children
+            for (let child of this.children) {
+                child.rect.stroke("#0536fc");
+                child.rect.strokeWidth(5);
+
+                /// Style children lines
+                if (child.person.parent1 == this.person) {
+                    child.line_parent1.stroke("#0536fc");
+                    child.line_parent1.strokeWidth(4);
+                } else if (child.person.parent2 == this.person) {
+                    child.line_parent2.stroke("#0536fc");
+                    child.line_parent2.strokeWidth(4);
+                }
+            }
+
+            /// Style partner
+        }
     }
 
     delete() {
@@ -750,7 +849,7 @@ window.addEventListener('resize', FamilyTree.fitStageIntoParentContainer);
 ///// Basic Family
 
 p = new Person("Hauptperson", false, true)
-p.partner = new Person("Ehepartner", false)
+p.setPartner(new Person("Ehepartner", false))
 
 p.setParent1(new Person("Vater", true))
 p.parent1.setParent1(new Person("Grossvater (paternal)", false))
