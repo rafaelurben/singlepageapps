@@ -2,7 +2,7 @@
 
 ///// Utils
 
-function round(value, digits = 4) {
+function round(value, digits = 3) {
     return Math.round(value * (Math.pow(10, digits))) / Math.pow(10, digits);
 }
 
@@ -27,6 +27,17 @@ class Person {
 
     static get everyone() {
         return Object.values(Person.everyoneById)
+    }
+
+    /// Display
+
+    static get displayFreeQuotaRelative() {
+        var f = frac(Person.free_quota_percent, 999);
+        return `Relativ: ${round(Person.free_quota_percent * 100)}% (${f[1]}/${f[2]})`;
+    }
+
+    static get displayFreeQuotaAbsolute() {
+        return `Absolut: ${roundMoney(Person.free_quota_absolute)} CHF`;
     }
 
     // Static methods
@@ -164,9 +175,29 @@ class Person {
         return Person.root === this;
     }
 
+    /// Display
+
     get displayName() {
         let id = this.id.toString().padStart(2, "0");
         return (this.alive ? `(${id}) ` : `[${id}] `) + this.name;
+    }
+
+    get displayShareRelative() {
+        var f = frac(this.share_percent, 999);
+        return `Relativ: ${ round(this.share_percent * 100) }% (${f[1]}/${f[2]})`;
+    }
+
+    get displayShareAbsolute() {
+        return `Absolut: ${roundMoney(this.share_absolute) } CHF`;
+    }
+
+    get displayMinShareRelative() {
+        var f = frac(this.min_share_percent, 999);
+        return `Min. Relativ: ${round(this.min_share_percent * 100)}% (${f[1]}/${f[2]})`;
+    }
+
+    get displayMinShareAbsolute() {
+        return `Min. Absolut: ${roundMoney(this.min_share_absolute) } CHF`;
     }
 
     // Methods
@@ -391,15 +422,15 @@ class Interface {
             if (Interface.selectedItem.alive) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Erbanteil" });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${round(Interface.selectedItem.share_percent * 100)}%` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${roundMoney(Interface.selectedItem.share_absolute)} CHF` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Relativ: ${round(Interface.selectedItem.min_share_percent * 100)}%` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Absolut: ${roundMoney(Interface.selectedItem.min_share_absolute)} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: Interface.selectedItem.displayShareRelative });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: Interface.selectedItem.displayShareAbsolute });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: Interface.selectedItem.displayMinShareRelative });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: Interface.selectedItem.displayMinShareAbsolute });
             } else if (Interface.selectedItem && Interface.selectedItem.isRoot) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Freie Quote" });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${round(Person.free_quota_percent * 100)}%` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${roundMoney(Person.free_quota_absolute)} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: Person.displayFreeQuotaRelative });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: Person.displayFreeQuotaAbsolute });
             }
 
             if (Interface.selectedItem.parent1 || Interface.selectedItem.parent2) {
@@ -620,9 +651,9 @@ class FamilyTreePerson {
         } else if (this.person.alive) {
             if (this.person.share_percent) {
                 if (this.person.min_share_percent) {
-                    return `Erbanteil:\n  Relativ: ${round(this.person.share_percent * 100)}%\n  Absolut: ${roundMoney(this.person.share_absolute, 3)} CHF\n  Min. Relativ: ${round(this.person.min_share_percent * 100)}%\n  Min. Absolut: ${roundMoney(this.person.min_share_absolute)} CHF`;
+                    return `Erbanteil:\n  ${this.person.displayShareRelative}\n  ${this.person.displayShareAbsolute}\n  ${this.person.displayMinShareRelative}\n  ${this.person.displayMinShareAbsolute}`;
                 } else {
-                    return `Erbanteil:\n  Relativ: ${round(this.person.share_percent * 100)}%\n  Absolut: ${roundMoney(this.person.share_absolute, 3)} CHF`;
+                    return `Erbanteil:\n  ${this.person.displayShareRelative}\n  ${this.person.displayShareAbsolute}`;
                 }
             } else {
                 return `Nicht erbberechtigt`;
@@ -868,31 +899,29 @@ class FamilyTree {
     }
 }
 
-FamilyTree.stage.on('click tap', FamilyTree.hideContextMenu);
+FamilyTree.stage.on('click tap dragstart', FamilyTree.hideContextMenu);
 FamilyTree.stage.on('wheel', FamilyTree.onWheel);
 FamilyTree.stage.add(FamilyTreePerson.layer);
 
 window.addEventListener('load', FamilyTree.fitStageIntoParentContainer);
 window.addEventListener('resize', FamilyTree.fitStageIntoParentContainer);
 
-///// Basic Family
-
-p = new Person("Hauptperson", false, true)
-p.setPartner(new Person("Ehepartner", false))
-
-p.setParent1(new Person("Vater", true))
-p.parent1.setParent1(new Person("Grossvater (paternal)", false))
-p.parent1.setParent2(new Person("Grossmutter (paternal)", false))
-
-p.setParent2(new Person("Mutter", true))
-p.parent2.setParent1(new Person("Grossvater (maternal)", false))
-p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
-
-Interface.select(0);
-
 ///// OnLoad
 
 window.addEventListener('load', () => {
+    p = new Person("Hauptperson", false, true)
+    p.setPartner(new Person("Ehepartner", false))
+
+    p.setParent1(new Person("Vater", true))
+    p.parent1.setParent1(new Person("Grossvater (paternal)", false))
+    p.parent1.setParent2(new Person("Grossmutter (paternal)", false))
+
+    p.setParent2(new Person("Mutter", true))
+    p.parent2.setParent1(new Person("Grossvater (maternal)", false))
+    p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
+
+    Interface.select(0);
+
     FamilyTreePerson.updateAll();
 
     FamilyTreePerson.everyoneById[0].group.move({ x: 650, y: 0 });
