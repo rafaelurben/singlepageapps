@@ -259,8 +259,8 @@ class Person {
     }
 
     distributeToParental3(percent) {
-        let p1 = (this.parent1 && (this.parent1.parent1 || this.parent1.parent2));
-        let p2 = (this.parent2 && (this.parent2.parent1 || this.parent2.parent2));
+        let p1 = (this.parent1 && this.parent1.isParental2Alive);
+        let p2 = (this.parent2 && this.parent2.isParental2Alive);
 
         if (p1 && p2) {
             this.parent1.distributeToParental2(percent / 2, 0);
