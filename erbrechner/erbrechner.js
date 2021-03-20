@@ -1,5 +1,15 @@
 // Erbrechner by rafaelurben
 
+///// Utils
+
+function round(value, digits = 4) {
+    return Math.round(value * (Math.pow(10, digits))) / Math.pow(10, digits);
+}
+
+function roundMoney(value) {
+    return Math.round(value * 20) / 20
+}
+
 ///// Calculation
 
 class Person {
@@ -329,7 +339,7 @@ class Interface {
             items.push({ element: "strong", class: "dropdown-header", text: "Bitte wählen Sie zuerst eine Person aus!" });
         } else {
             items.push({ element: "strong", class: "dropdown-header", text: "Umbenennen" });
-            items.push({ element: "div", innerHTML: `<input id="renameinput" class="form-control" placeholder="Umbenennen" oninput="Interface.rename();" value="${Interface.selectedItem.name}">` });
+            items.push({ element: "div", innerHTML: `<input id="renameinput" class="form-control" placeholder="Umbenennen" oninput="Interface.rename(this.value);" value="${Interface.selectedItem.name}">` });
 
             if (!Interface.selectedItem.isRoot || Interface.selectedItem.canDelete) {
                 items.push({ element: "div", class: "dropdown-divider" });
@@ -381,15 +391,15 @@ class Interface {
             if (Interface.selectedItem.alive) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Erbanteil" });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${Interface.selectedItem.share_percent * 100}%` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${Interface.selectedItem.share_absolute} CHF` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Relativ: ${Interface.selectedItem.min_share_percent * 100}%` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Absolut: ${Interface.selectedItem.min_share_absolute} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${round(Interface.selectedItem.share_percent * 100)}%` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${roundMoney(Interface.selectedItem.share_absolute)} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Relativ: ${round(Interface.selectedItem.min_share_percent * 100)}%` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Min. Absolut: ${roundMoney(Interface.selectedItem.min_share_absolute)} CHF` });
             } else if (Interface.selectedItem && Interface.selectedItem.isRoot) {
                 items.push({ element: "div", class: "dropdown-divider" });
                 items.push({ element: "strong", class: "dropdown-header", text: "Freie Quote" });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${Person.free_quota_percent * 100}%` });
-                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${Person.free_quota_absolute} CHF` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Relativ: ${round(Person.free_quota_percent * 100)}%` });
+                items.push({ tabIndex: -1, class: "dropdown-item disabled", text: `Absolut: ${roundMoney(Person.free_quota_absolute)} CHF` });
             }
 
             if (Interface.selectedItem.parent1 || Interface.selectedItem.parent2) {
@@ -424,8 +434,8 @@ class Interface {
         Interface.update();
     }
 
-    static rename() {
-        Interface.selectedItem.name = document.getElementById("renameinput").value;
+    static rename(name) {
+        Interface.selectedItem.name = name;
         Interface._menu_updateSelectMenu();
         Interface._menu_updateInfosMenu();
         FamilyTreePerson.updateById(Interface.selectedItem.id);
@@ -451,6 +461,7 @@ class Interface {
         Interface._menu_updateSelectMenu();
         Interface._menu_updateActionMenu();
         Interface._menu_updateInfosMenu();
+        FamilyTree.hideContextMenu();
         FamilyTreePerson.updateAll();
     }
 
@@ -511,7 +522,7 @@ class FamilyTreePerson {
         FamilyTreePerson.everyoneById[id].update();
     }
 
-    constructor (person) {
+    constructor(person) {
         this.person = person;
         this.group = new Konva.Group({
             x: 0,
@@ -521,9 +532,9 @@ class FamilyTreePerson {
                 return { x: pos.x, y: this.group.absolutePosition().y }
             }
         })
-        this.group.on('click', () => { Interface.select(this.person.id); });
-        this.group.on('dblclick', () => { Interface.select(this.person.id); Interface.toggleAlive(); });
-        this.group.on('contextmenu', e => { e.evt.preventDefault(); Interface.select(this.person.id); Interface.actionDropdown.show(); });
+        this.group.on('click tap', () => { Interface.select(this.person.id); });
+        this.group.on('dblclick dbltap', () => { Interface.select(this.person.id); Interface.toggleAlive(); });
+        this.group.on('contextmenu', e => { e.evt.preventDefault(); Interface.select(this.person.id); FamilyTree.showContextMenu(); });
         this.group.on('dragmove', () => { this.updateLines(); });
 
         this.line_parent1 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
@@ -539,7 +550,7 @@ class FamilyTreePerson {
         }
 
         this.rect = new Konva.Rect({
-            x: 0, y: 0, width: 400, height: 180, 
+            x: 0, y: 0, width: 400, height: 180,
             fill: "orange", stroke: "white", strokeWidth: 2,
             cornerRadius: 10,
         })
@@ -593,7 +604,7 @@ class FamilyTreePerson {
 
     get children() {
         let list = [];
-        for(let child of this.person.children) {
+        for (let child of this.person.children) {
             if (FamilyTreePerson.everyoneById.hasOwnProperty(child.id)) {
                 list.push(FamilyTreePerson.everyoneById[child.id]);
             }
@@ -605,13 +616,13 @@ class FamilyTreePerson {
 
     get information() {
         if (this.person.isRoot) {
-            return `Freie Quote:\n  Relativ: ${Person.free_quota_percent*100}%\n  Absolut: ${Person.free_quota_absolute} CHF`;
+            return `Freie Quote:\n  Relativ: ${round(Person.free_quota_percent * 100)}%\n  Absolut: ${roundMoney(Person.free_quota_absolute)} CHF`;
         } else if (this.person.alive) {
             if (this.person.share_percent) {
                 if (this.person.min_share_percent) {
-                    return `Erbanteil:\n  Relativ: ${this.person.share_percent*100}%\n  Absolut: ${this.person.share_absolute} CHF\n  Min. Relativ: ${this.person.min_share_percent*100}%\n  Min. Absolut: ${this.person.min_share_absolute} CHF`;
+                    return `Erbanteil:\n  Relativ: ${round(this.person.share_percent * 100)}%\n  Absolut: ${roundMoney(this.person.share_absolute, 3)} CHF\n  Min. Relativ: ${round(this.person.min_share_percent * 100)}%\n  Min. Absolut: ${roundMoney(this.person.min_share_absolute)} CHF`;
                 } else {
-                    return `Erbanteil:\n  Relativ: ${this.person.share_percent * 100}%\n  Absolut: ${this.person.share_absolute} CHF`;
+                    return `Erbanteil:\n  Relativ: ${round(this.person.share_percent * 100)}%\n  Absolut: ${roundMoney(this.person.share_absolute, 3)} CHF`;
                 }
             } else {
                 return `Nicht erbberechtigt`;
@@ -619,7 +630,7 @@ class FamilyTreePerson {
         } else {
             return `Tot`;
         }
-    }   
+    }
 
     /// Methods
 
@@ -629,8 +640,8 @@ class FamilyTreePerson {
             let parent1 = this.parent1;
             let ap_g = this.rect.absolutePosition();
             let ap_p = parent1.rect.absolutePosition();
-            FamilyTree.zigzagLine(this.line_parent1, 
-                ap_g.x + (this.rect.width()*FamilyTree.stage.scaleX() / 2), ap_g.y,
+            FamilyTree.zigzagLine(this.line_parent1,
+                ap_g.x + (this.rect.width() * FamilyTree.stage.scaleX() / 2), ap_g.y,
                 ap_p.x + (parent1.rect.width() * FamilyTree.stage.scaleX() / 2), ap_p.y + parent1.rect.height() * FamilyTree.stage.scaleY(),
             )
         } else {
@@ -676,7 +687,7 @@ class FamilyTreePerson {
         this.text_info.text(this.information);
         this.rect.fill(this.person.isRoot ? "#2E86AB" : (this.person.alive ? (this.person.isPartner ? "#AF3B6E" : "#6B7FD7") : "#4C2A85"));
         this.updateLines();
-        
+
         /// Add events
         if (this.parent1) this.parent1.group.on('dragmove', () => { this.updateLines(); });
         if (this.parent2) this.parent2.group.on('dragmove', () => { this.updateLines(); });
@@ -750,6 +761,8 @@ class FamilyTreePerson {
     }
 }
 
+let menu_context = document.getElementById('menu_context');
+
 class FamilyTree {
     static STAGEWIDTH = 2000;
     static STAGEHEIGHT = 2000;
@@ -761,7 +774,7 @@ class FamilyTree {
         draggable: true,
     })
 
-    /// Methods
+    /// Zoom
 
     static zoom(direction, speed) {
         var oldScale = FamilyTree.stage.scaleX();
@@ -787,6 +800,21 @@ class FamilyTree {
 
     static zoomAbsolute(scale) {
         FamilyTree.zoom(true, scale / FamilyTree.stage.scaleX());
+    }
+
+    /// Context menu
+
+    static showContextMenu() {
+        /// Show menu
+        menu_context.innerHTML = menu_action.innerHTML;
+        menu_context.style.display = 'initial';
+        var containerRect = FamilyTree.stage.container().getBoundingClientRect();
+        menu_context.style.top = containerRect.top + FamilyTree.stage.getPointerPosition().y + 4 + 'px';
+        menu_context.style.left = containerRect.left + FamilyTree.stage.getPointerPosition().x + 4 + 'px';
+    }
+
+    static hideContextMenu() {
+        menu_context.style.display = 'none';
     }
 
     /// Tools
@@ -823,7 +851,7 @@ class FamilyTree {
 
     static fitStageIntoParentContainer() {
         console.log("FamilyTree.fitStageIntoParentContainer");
-        
+
         var container = document.querySelector('#canvascontainer');
         var containerWidth = container.offsetWidth;
         var scale = containerWidth / FamilyTree.STAGEWIDTH;
@@ -835,11 +863,12 @@ class FamilyTree {
     }
 
     static onWheel(e) {
-        e.evt.preventDefault(); 
+        e.evt.preventDefault();
         FamilyTree.zoom(e.evt.deltaY < 0);
     }
 }
 
+FamilyTree.stage.on('click tap', FamilyTree.hideContextMenu);
 FamilyTree.stage.on('wheel', FamilyTree.onWheel);
 FamilyTree.stage.add(FamilyTreePerson.layer);
 
