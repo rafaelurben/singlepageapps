@@ -41,6 +41,7 @@ class Person {
     }
 
     // Static methods
+    /// Distribution
 
     static resetDistribution() {
         Person.free_quota_percent = 0;
@@ -92,6 +93,8 @@ class Person {
         Person.free_quota_absolute = Person.free_quota_percent * amount;
     }
 
+    /// Import and export
+
     static json() {
         return {
             everyone: Person.everyone.map(p => p.json()),
@@ -101,10 +104,35 @@ class Person {
         }
     }
 
+    static exportJson() {
+        return {
+            everyone: Person.everyone.map(p => p.jsonForExport()),
+        }
+    }
+
+    static importJson(data) {
+        Person.highestid = 0;
+        Person.everyoneById = {};
+        Person.root = null;
+        for (let pdata of data.everyone) {
+            let p = new Person(pdata.name, pdata.alive, pdata.isroot, pdata.id);
+            p.generation = pdata.generation;
+        }
+        for (let pdata of data.everyone) {
+            let p = Person.everyoneById[pdata.id];
+            if (pdata.parent1_id !== null) p.parent1 = Person.everyoneById[pdata.parent1_id];
+            if (pdata.parent2_id !== null) p.parent2 = Person.everyoneById[pdata.parent2_id];
+            if (pdata.partner_id !== null) p.partner = Person.everyoneById[pdata.partner_id];
+            for (let cid of pdata.children_ids) {
+                p.children.push(Person.everyoneById[cid])
+            }
+        }
+    }
+
     // Constructor
 
-    constructor(name, alive, isroot = false) {
-        this.id = Person.highestid++;
+    constructor(name, alive, isroot = false, customid = null) {
+        this.id = customid === null ? Person.highestid++ : customid;
         this.name = String(name);
         this.alive = Boolean(alive);
         this.generation = null;
@@ -184,11 +212,11 @@ class Person {
 
     get displayShareRelative() {
         var f = frac(this.share_percent, 999);
-        return `Relativ: ${ round(this.share_percent * 100) }% (${f[1]}/${f[2]})`;
+        return `Relativ: ${round(this.share_percent * 100)}% (${f[1]}/${f[2]})`;
     }
 
     get displayShareAbsolute() {
-        return `Absolut: ${roundMoney(this.share_absolute) } CHF`;
+        return `Absolut: ${roundMoney(this.share_absolute)} CHF`;
     }
 
     get displayMinShareRelative() {
@@ -197,7 +225,7 @@ class Person {
     }
 
     get displayMinShareAbsolute() {
-        return `Min. Absolut: ${roundMoney(this.min_share_absolute) } CHF`;
+        return `Min. Absolut: ${roundMoney(this.min_share_absolute)} CHF`;
     }
 
     // Methods
@@ -226,18 +254,16 @@ class Person {
     }
 
     delete() {
-        if (this.canDelete) {
-            if (this.parent1) {
-                let index = this.parent1.children.indexOf(this);
-                this.parent1.children.splice(index, 1);
-            }
-            if (this.parent2) {
-                let index = this.parent2.children.indexOf(this);
-                this.parent2.children.splice(index, 1);
-            }
-            this.deleteRecursive();
-            Person.resetDistribution();
+        if (this.parent1) {
+            let index = this.parent1.children.indexOf(this);
+            this.parent1.children.splice(index, 1);
         }
+        if (this.parent2) {
+            let index = this.parent2.children.indexOf(this);
+            this.parent2.children.splice(index, 1);
+        }
+        this.deleteRecursive();
+        Person.resetDistribution();
     }
 
     deleteRecursive() {
@@ -246,6 +272,8 @@ class Person {
         }
         delete Person.everyoneById[this.id];
     }
+
+    /// Export
 
     json() {
         return {
@@ -261,6 +289,22 @@ class Person {
             parent1_id: this.parent1 ? this.parent1.id : null,
             parent2_id: this.parent2 ? this.parent2.id : null,
             children_ids: this.children.map(c => c.id),
+        }
+    }
+
+    jsonForExport() {
+        return {
+            id: this.id,
+            name: this.name,
+            alive: this.alive,
+            generation: this.generation,
+
+            parent1_id: this.parent1 ? this.parent1.id : null,
+            parent2_id: this.parent2 ? this.parent2.id : null,
+            partner_id: this.partner ? this.partner.id : null,
+            children_ids: this.children.map(c => c.id),
+
+            isroot: this.isRoot,
         }
     }
 
@@ -494,6 +538,7 @@ class Interface {
         Interface._menu_updateInfosMenu();
         FamilyTree.hideContextMenu();
         FamilyTreePerson.updateAll();
+        Interface.exportToUrl();
     }
 
     // Events
@@ -506,6 +551,33 @@ class Interface {
             document.getElementById("fullscreen-open").style.display = "block";
             document.getElementById("fullscreen-close").style.display = "none";
         }
+    }
+
+    // Import & Export
+
+    static reset() {
+        for (let id in Person.everyoneById) {
+            Interface.select(id);
+            Interface.delete();
+        }
+    }
+
+    static importFromUrl() {
+        try {
+            var datastr = window.location.hash.substr(1);
+            var data = JSON.parse(decodeURIComponent(datastr));
+            Person.importJson(data);
+            return true;
+        } catch (e) {
+            console.log("ImportError:", e);
+            return false;
+        }
+    }
+
+    static exportToUrl() {
+        var data = Person.exportJson();
+        var datastr = encodeURIComponent(JSON.stringify(data));
+        document.getElementById("export-url").href = location.href.split("#")[0] + "#" + datastr;
     }
 }
 
@@ -787,6 +859,7 @@ class FamilyTreePerson {
         this.rect.destroy();
         this.line_parent1.destroy();
         this.line_parent2.destroy();
+        if (this.line_partner) this.line_partner.destroy();
         this.group.destroy();
         delete FamilyTreePerson.everyoneById[this.person.id];
         for (let child of this.person.children) {
@@ -930,31 +1003,42 @@ window.addEventListener('resize', FamilyTree.fitStageIntoParentContainer);
 ///// OnLoad
 
 window.addEventListener('load', () => {
-    p = new Person("Hauptperson", false, true)
-    p.setPartner(new Person("Ehepartner", false))
+    var succes = Interface.importFromUrl();
+    console.log(Person.everyoneById);
 
-    p.setParent1(new Person("Vater", true))
-    p.parent1.setParent1(new Person("Grossvater (paternal)", false))
-    p.parent1.setParent2(new Person("Grossmutter (paternal)", false))
+    if (!succes) {
+        console.log("Create default family...");
 
-    p.setParent2(new Person("Mutter", true))
-    p.parent2.setParent1(new Person("Grossvater (maternal)", false))
-    p.parent2.setParent2(new Person("Grossmutter (maternal)", false))
+        p = new Person("Hauptperson", false, true);
+        p.setPartner(new Person("Ehepartner", false));
 
-    Interface.select(0);
+        p.setParent1(new Person("Vater", true));
+        p.parent1.setParent1(new Person("Grossvater (paternal)", false));
+        p.parent1.setParent2(new Person("Grossmutter (paternal)", false));
 
-    FamilyTreePerson.updateAll();
+        p.setParent2(new Person("Mutter", true));
+        p.parent2.setParent1(new Person("Grossvater (maternal)", false));
+        p.parent2.setParent2(new Person("Grossmutter (maternal)", false));
 
-    FamilyTreePerson.everyoneById[0].group.move({ x: 650, y: 0 });
-    FamilyTreePerson.everyoneById[1].group.move({ x: 1090, y: 0 });
+        Interface.select(p.id);
+    }
 
-    FamilyTreePerson.everyoneById[2].group.move({ x: 210, y: 0 });
-    FamilyTreePerson.everyoneById[3].group.move({ x: 0, y: 0 });
-    FamilyTreePerson.everyoneById[4].group.move({ x: 420, y: 0 });
+    try {
+        FamilyTreePerson.updateAll();
 
-    FamilyTreePerson.everyoneById[5].group.move({ x: 1090, y: 0 });
-    FamilyTreePerson.everyoneById[6].group.move({ x: 880, y: 0 });
-    FamilyTreePerson.everyoneById[7].group.move({ x: 1300, y: 0 });
+        FamilyTreePerson.everyoneById[0].group.move({ x: 650, y: 0 });
+        FamilyTreePerson.everyoneById[1].group.move({ x: 1090, y: 0 });
+
+        FamilyTreePerson.everyoneById[2].group.move({ x: 210, y: 0 });
+        FamilyTreePerson.everyoneById[3].group.move({ x: 0, y: 0 });
+        FamilyTreePerson.everyoneById[4].group.move({ x: 420, y: 0 });
+
+        FamilyTreePerson.everyoneById[5].group.move({ x: 1090, y: 0 });
+        FamilyTreePerson.everyoneById[6].group.move({ x: 880, y: 0 });
+        FamilyTreePerson.everyoneById[7].group.move({ x: 1300, y: 0 });
+    } catch (e) {
+        console.log("DefaultPositioningError", e);
+    }
 
     FamilyTreePerson.updateAll();
     FamilyTree.stage.batchDraw();
