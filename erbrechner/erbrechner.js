@@ -509,12 +509,12 @@ class FamilyTreePerson {
         })
         this.group.on('click', () => { Interface.select(this.person.id); });
         this.group.on('dblclick', () => { Interface.select(this.person.id); Interface.toggleAlive(); });
-        // this.group.on('dragmove', () => { this.updateLines(); });
+        this.group.on('dragmove', () => { this.updateLines(); });
 
-        // this.line_parent1 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
-        // FamilyTreePerson.layer.add(this.line_parent1);
-        // this.line_parent2 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
-        // FamilyTreePerson.layer.add(this.line_parent2);
+        this.line_parent1 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
+        FamilyTreePerson.layer.add(this.line_parent1);
+        this.line_parent2 = new Konva.Line({ visible: false, listening: false, stroke: "grey" });
+        FamilyTreePerson.layer.add(this.line_parent2);
 
         this.rect = new Konva.Rect({
             x: 0, y: 0, width: 400, height: 180, 
@@ -534,8 +534,8 @@ class FamilyTreePerson {
         this.group.add(this.text_info);
 
         FamilyTreePerson.everyoneById[this.person.id] = this;
-        this.update();
         FamilyTreePerson.layer.add(this.group);
+        this.update();
     }
 
     get parent1() {
@@ -573,30 +573,28 @@ class FamilyTreePerson {
     }   
 
     updateLines() {
-        // if (this.parent1) {
-        //     let parent1 = this.parent1;
-        //     // parent1.group.on('dragmove', () => { this.updateLines(); });
-        //     let ap_g = this.rect.absolutePosition();
-        //     let ap_p = parent1.rect.absolutePosition();
-        //     console.log(ap_g, ap_p);
-        //     console.log(this.rect, parent1.rect);
-        //     let points = [
-        //         ap_g.x + (this.rect.width() / 2), ap_g.y,
-        //         ap_g.x + (this.rect.width() / 2), (ap_g.y - ap_p.y + parent1.rect.height()) / 2,
-        //         ap_p.x + (parent1.rect.width() / 2), (ap_g.y - ap_p.y + parent1.rect.height()) / 2,
-        //         ap_p.x + (parent1.rect.width() / 2), ap_p.y,
-        //     ];
-        //     console.log(points);
-        //     this.line_parent1.points(points);
-        //     this.line_parent1.visible(true);
-        // } else {
-        //     this.line_parent1.visible(false);
-        // }
-        // if (this.parent2) {
-        //     this.line_parent2.visible(true);
-        // } else {
-        //     this.line_parent2.visible(false);
-        // }
+        if (this.parent1) {
+            let parent1 = this.parent1;
+            let ap_g = this.rect.absolutePosition();
+            let ap_p = parent1.rect.absolutePosition();
+            FamilyTree.zigzagLine(this.line_parent1, 
+                ap_g.x + (this.rect.width()*FamilyTree.stage.scaleX() / 2), ap_g.y,
+                ap_p.x + (parent1.rect.width() * FamilyTree.stage.scaleX() / 2), ap_p.y + parent1.rect.height() * FamilyTree.stage.scaleY(),
+            )
+        } else {
+            this.line_parent1.visible(false);
+        }
+        if (this.parent2) {
+            let parent2 = this.parent2;
+            let ap_g = this.rect.absolutePosition();
+            let ap_p = parent2.rect.absolutePosition();
+            FamilyTree.zigzagLine(this.line_parent2,
+                ap_g.x + (this.rect.width() * FamilyTree.stage.scaleX() / 2), ap_g.y,
+                ap_p.x + (parent2.rect.width() * FamilyTree.stage.scaleX() / 2), ap_p.y + parent2.rect.height() * FamilyTree.stage.scaleY(),
+            )
+        } else {
+            this.line_parent2.visible(false);
+        }
     }
 
     update() {
@@ -605,14 +603,17 @@ class FamilyTreePerson {
         this.rect.fill(this.person.isRoot ? "#2E86AB" : (this.person.alive ? (this.person.isPartner ? "#AF3B6E" : "#6B7FD7") : "#4C2A85"));
         this.rect.stroke(this.person === Interface.selectedItem ? "red" : "white");
         this.rect.strokeWidth(this.person === Interface.selectedItem ? 5 : 2);
+        this.updateLines();
+        if (this.parent1) this.parent1.group.on('dragmove', () => { this.updateLines(); });
+        if (this.parent2) this.parent2.group.on('dragmove', () => { this.updateLines(); });
     }
 
     delete() {
         this.text_title.destroy();
         this.text_info.destroy();
         this.rect.destroy();
-        // this.line_parent1.destroy();
-        // this.line_parent2.destroy();
+        this.line_parent1.destroy();
+        this.line_parent2.destroy();
         this.group.destroy();
         delete FamilyTreePerson.everyoneById[this.person.id];
         for (let child of this.person.children) {
@@ -658,6 +659,25 @@ class FamilyTree {
 
     static zoomAbsolute(scale) {
         FamilyTree.zoom(true, scale / FamilyTree.stage.scaleX());
+    }
+
+    /// Tools
+
+    static zigzagLine(line, x1, y1, x2, y2) {
+        let scaleX = FamilyTree.stage.scaleX();
+        let scaleY = FamilyTree.stage.scaleY();
+        let offsetX = FamilyTree.stage.x() / scaleX;
+        let offsetY = FamilyTree.stage.y() / scaleY;
+        let y3 = (y1 - Math.abs(y2 - y1) / 2);
+        let points = [
+            x1 / scaleX - offsetX, y1 / scaleY - offsetY,
+            x1 / scaleX - offsetX, y3 / scaleY - offsetY,
+            x2 / scaleX - offsetX, y3 / scaleY - offsetY,
+            x2 / scaleX - offsetX, y2 / scaleY - offsetY,
+        ];
+        //console.log(points);
+        line.points(points);
+        line.visible(true);
     }
 
     /// Events
@@ -706,6 +726,7 @@ Interface.select(0);
 
 window.addEventListener('load', () => {
     FamilyTreePerson.updateAll();
+
     FamilyTreePerson.everyoneById[0].group.move({ x: 650, y: 0 });
     FamilyTreePerson.everyoneById[1].group.move({ x: 1090, y: 0 });
 
@@ -717,5 +738,6 @@ window.addEventListener('load', () => {
     FamilyTreePerson.everyoneById[6].group.move({ x: 880, y: 0 });
     FamilyTreePerson.everyoneById[7].group.move({ x: 1300, y: 0 });
 
+    FamilyTreePerson.updateAll();
     FamilyTree.stage.batchDraw();
 });
