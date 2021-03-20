@@ -56,6 +56,9 @@
                             <a class="dropdown-item" href="#" onclick="FamilyTree.zoom(true, 1.25);">Zoom +</a>
                             <a class="dropdown-item" href="#" onclick="FamilyTree.zoom(false, 1.25);">Zoom -</a>
                             <a class="dropdown-item" href="#" onclick="FamilyTree.zoomAbsolute(1);">Reset Zoom</a>
+                            <div class="dropdown-divider"></div>
+                            <strong class="dropdown-header">Export</strong>
+                            <a class="dropdown-item" href="#" onclick="FamilyTree.exportPNG();">Export .png</a>
                         </div>
                     </li>
                 </ul>
@@ -80,7 +83,7 @@
                             <a target="_blank" class="dropdown-item"
                                 href="https://github.com/rafaelurben/singlepageapps/tree/master/erbrechner">Quellcode & Infos</a>
                             <div class="dropdown-divider"></div>
-                            <a zIndex="-1" class="dropdown-item disabled">v3 - 2021/03/20</a>
+                            <a zIndex="-1" class="dropdown-item disabled">v3.1 - 2021/03/20</a>
                             <a zIndex="-1" class="dropdown-item disabled">© Rafael Urben</a>
                         </div>
                     </li>
@@ -117,6 +120,9 @@
     integrity="sha384-nsg8ua9HAw1y0W1btsyWgBklPnCUAFLuTMS2G72MMONqmOymq585AcH49TLBQObG"
     crossorigin="anonymous"></script>
     <script src="https://unpkg.com/konva@7.2.5/konva.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js"
+        integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/"
+        crossorigin="anonymous"></script>
     
     <script src="erbrechner.js"></script>
 </body>

@@ -553,6 +553,8 @@ class FamilyTreePerson {
         FamilyTreePerson.everyoneById[id].update();
     }
 
+    /// Constructor
+
     constructor(person) {
         this.person = person;
         this.group = new Konva.Group({
@@ -607,6 +609,7 @@ class FamilyTreePerson {
         this.update();
     }
 
+    // Properties
     /// Relations
 
     get parent1() {
@@ -663,7 +666,7 @@ class FamilyTreePerson {
         }
     }
 
-    /// Methods
+    // Methods
 
     updateLines() {
         /// Parent1 line
@@ -805,6 +808,7 @@ class FamilyTree {
         draggable: true,
     })
 
+    // Methods
     /// Zoom
 
     static zoom(direction, speed) {
@@ -896,6 +900,23 @@ class FamilyTree {
     static onWheel(e) {
         e.evt.preventDefault();
         FamilyTree.zoom(e.evt.deltaY < 0);
+    }
+
+    /// Export
+
+    static downloadURI(uri, name) {
+        // function from https://stackoverflow.com/a/15832662/512042
+        var link = document.createElement('a');
+        link.download = name;
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    static exportPNG() {
+        var date = (new Date(Date.now())).toLocaleDateString();
+        FamilyTree.downloadURI(FamilyTree.stage.toDataURL(), `Erbrechner Export vom ${date}.png`)
     }
 }
 
