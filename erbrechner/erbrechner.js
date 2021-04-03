@@ -368,6 +368,8 @@ let menu_select = document.getElementById("menu_select");
 let menu_infos = document.getElementById("menu_infos");
 
 class Interface {
+    static hideInfotexts = false;
+
     static selectedItem = null;
     static actionDropdown = new bootstrap.Dropdown(document.getElementById("menu_action_toggle"));
 
@@ -539,6 +541,12 @@ class Interface {
         FamilyTree.hideContextMenu();
         FamilyTreePerson.updateAll();
         Interface.exportToUrl();
+    }
+
+    static toggleInfotexts() {
+        Interface.hideInfotexts = !Interface.hideInfotexts;
+        Interface.update();
+        document.getElementById("toggleInfotexts").className = Interface.hideInfotexts ? "dropdown-item" : "dropdown-item active";
     }
 
     // Events
@@ -721,6 +729,8 @@ class FamilyTreePerson {
     /// Texts
 
     get information() {
+        if (Interface.hideInfotexts) return "";
+
         if (this.person.isRoot) {
             return `Freie Quote:\n  Relativ: ${round(Person.free_quota_percent * 100)}%\n  Absolut: ${roundMoney(Person.free_quota_absolute)} CHF`;
         } else if (this.person.alive) {
