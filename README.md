@@ -1,6 +1,6 @@
 # singlepageapps
 
-These are some little tests consisting of only one page. (Technically one html, one css and one js file to maintain easy readability. #cheater)
+These are some little experiments with JavaScript consisting of only one page.
 
 Pages:
 
