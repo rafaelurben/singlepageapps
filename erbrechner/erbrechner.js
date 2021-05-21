@@ -519,8 +519,10 @@ class Interface {
     }
 
     static toggleAlive() {
-        Interface.selectedItem.alive = !Interface.selectedItem.alive;
-        Interface.update();
+        if (!(Interface.selectedItem.isRoot)) {
+            Interface.selectedItem.alive = !Interface.selectedItem.alive;
+            Interface.update();
+        }
     }
 
     static addChild(p1id, p2id = null) {
