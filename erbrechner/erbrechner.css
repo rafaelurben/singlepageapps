@@ -40,3 +40,31 @@ body, #app {
 #valueinput {
     -moz-appearance: textfield;
 }
+
+/* Mobile adjustments */
+
+@media screen and (max-width: 992px) {
+    .form-inline {
+        margin: 5px 0;
+    }
+
+    #menubar {
+        padding-right: 16px;
+        max-height: 100vh;
+        overflow-y: auto;
+    }
+
+    #mainmenubar {
+        padding-bottom: 8px;
+    }
+
+    .hideonmobile {
+        display: none;
+    }
+}
+
+@media screen and (orientation: portrait) {
+    #canvascontainer div {
+        min-height: 100%;
+    }
+}

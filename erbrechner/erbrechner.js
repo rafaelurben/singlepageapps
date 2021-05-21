@@ -974,7 +974,13 @@ class FamilyTree {
 
         var container = document.querySelector('#canvascontainer');
         var containerWidth = container.offsetWidth;
-        var scale = containerWidth / FamilyTree.STAGEWIDTH;
+        var containerHeight = container.offsetHeight;
+
+        if (containerWidth > containerHeight) {
+            var scale = containerWidth / FamilyTree.STAGEWIDTH;
+        } else {
+            var scale = containerHeight / FamilyTree.STAGEHEIGHT;
+        }
 
         FamilyTree.stage.width(FamilyTree.STAGEWIDTH * scale);
         FamilyTree.stage.height(FamilyTree.STAGEHEIGHT * scale);

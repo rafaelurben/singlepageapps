@@ -6,7 +6,7 @@ Dieses Tool ist ziemlich gut getestet und sollte korrekt funktionieren, jedoch g
 
 ## Bedienung
 
-Dieses Tool funktioniert NUR auf Laptops und Desktop PCs, nicht aber auf Handys!
+Hinweis: Dieses Tool ist nicht für kleine Geräte geeignet.
 
 - Klick: Auswählen
 - Doppelklick: Zwischen lebend/tot umschalten
