@@ -104,21 +104,19 @@ class Person {
         }
     }
 
-    static exportJson() {
-        return {
-            everyone: Person.everyone.map(p => p.jsonForExport()),
-        }
+    static exportList() {
+        return Person.everyone.map(p => p.jsonForExport());
     }
 
-    static importJson(data) {
+    static importList(persons) {
         Person.highestid = 0;
         Person.everyoneById = {};
         Person.root = null;
-        for (let pdata of data.everyone) {
+        for (let pdata of persons) {
             let p = new Person(pdata.name, pdata.alive, pdata.isroot, pdata.id);
             p.generation = pdata.generation;
         }
-        for (let pdata of data.everyone) {
+        for (let pdata of persons) {
             let p = Person.everyoneById[pdata.id];
             if (pdata.parent1_id !== null) p.parent1 = Person.everyoneById[pdata.parent1_id];
             if (pdata.parent2_id !== null) p.parent2 = Person.everyoneById[pdata.parent2_id];
@@ -576,7 +574,14 @@ class Interface {
         try {
             var datastr = window.location.hash.substr(1);
             var data = JSON.parse(decodeURIComponent(datastr));
-            Person.importJson(data);
+
+            document.getElementById("valueinput").value = data.value;
+            Person.importList(data.everyone);
+            FamilyTreePerson.updateAll();
+            FamilyTreePerson.importPositionList(data.positions);
+            Interface.select(data.selectedItemId);
+            if (data.hideInfotexts) Interface.toggleInfotexts();
+
             return true;
         } catch (e) {
             console.log("ImportError:", e);
@@ -585,13 +590,20 @@ class Interface {
     }
 
     static exportToUrl() {
-        var data = Person.exportJson();
+        var data = {
+            value: document.getElementById("valueinput").value,
+            everyone: Person.exportList(),
+            positions: FamilyTreePerson.exportPositionList(),
+            selectedItemId: Interface.selectedItem.id,
+            hideInfotexts: Interface.hideInfotexts,
+        }
         var datastr = encodeURIComponent(JSON.stringify(data));
         document.getElementById("export-url").href = location.href.split("#")[0] + "#" + datastr;
     }
 }
 
-document.getElementById("valueinput").oninput = Interface.update;
+document.getElementById("valueinput").addEventListener("input", Interface.exportToUrl);
+document.getElementById("valueinput").addEventListener("input", Interface.update);
 document.onfullscreenchange = Interface.onfullscreenchange;
 
 ///// FamilyTree
@@ -633,6 +645,29 @@ class FamilyTreePerson {
 
     static updateById(id) {
         FamilyTreePerson.everyoneById[id].update();
+    }
+
+    /// Export & Import
+
+    static exportPositionList() {
+        var list = [];
+        for (let person of FamilyTreePerson.everyone) {
+            list.push({
+                id: person.person.id,
+                x: FamilyTree.getCoordX(person.group.absolutePosition().x),
+            })
+        }
+        return list;
+    }
+
+    static importPositionList(list) {
+        for (let pdata of list) {
+            if (FamilyTreePerson.everyoneById.hasOwnProperty(pdata.id)) {
+                FamilyTreePerson.everyoneById[pdata.id].group.move({ x: pdata.x, y: 0 });
+            } else {
+                console.log("wtf", pdata)
+            }
+        }
     }
 
     /// Constructor
@@ -860,8 +895,6 @@ class FamilyTreePerson {
                     child.line_parent2.strokeWidth(4);
                 }
             }
-
-            /// Style partner
         }
     }
 
@@ -970,8 +1003,6 @@ class FamilyTree {
     /// Events
 
     static fitStageIntoParentContainer() {
-        console.log("FamilyTree.fitStageIntoParentContainer");
-
         var container = document.querySelector('#canvascontainer');
         var containerWidth = container.offsetWidth;
         var containerHeight = container.offsetHeight;
@@ -1011,6 +1042,7 @@ class FamilyTree {
     }
 }
 
+FamilyTree.stage.on('click tap dragend', Interface.exportToUrl);
 FamilyTree.stage.on('click tap dragstart', FamilyTree.hideContextMenu);
 FamilyTree.stage.on('wheel', FamilyTree.onWheel);
 FamilyTree.stage.add(FamilyTreePerson.layer);
@@ -1039,25 +1071,20 @@ window.addEventListener('load', () => {
         p.parent2.setParent2(new Person("Grossmutter (maternal)", false));
 
         Interface.select(p.id);
-    }
 
-    try {
-        FamilyTreePerson.updateAll();
-
-        FamilyTreePerson.everyoneById[0].group.move({ x: 650, y: 0 });
-        FamilyTreePerson.everyoneById[1].group.move({ x: 1090, y: 0 });
-
-        FamilyTreePerson.everyoneById[2].group.move({ x: 210, y: 0 });
-        FamilyTreePerson.everyoneById[3].group.move({ x: 0, y: 0 });
-        FamilyTreePerson.everyoneById[4].group.move({ x: 420, y: 0 });
-
-        FamilyTreePerson.everyoneById[5].group.move({ x: 1090, y: 0 });
-        FamilyTreePerson.everyoneById[6].group.move({ x: 880, y: 0 });
-        FamilyTreePerson.everyoneById[7].group.move({ x: 1300, y: 0 });
-    } catch (e) {
-        console.log("DefaultPositioningError", e);
+        FamilyTreePerson.importPositionList([
+            {id: 0, x: 650},
+            {id: 1, x: 1090},
+            {id: 2, x: 210},
+            {id: 3, x: 0},
+            {id: 4, x: 420},
+            {id: 5, x: 1090},
+            {id: 6, x: 880},
+            {id: 7, x: 1300},
+        ]);
     }
 
     FamilyTreePerson.updateAll();
     FamilyTree.stage.batchDraw();
+    Interface.exportToUrl();
 });
