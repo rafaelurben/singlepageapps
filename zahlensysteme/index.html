@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Zahlensysteme</title>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <style>
+        * {
+            font-family: sans-serif;
+        }
+
+        table {
+            border-collapse: collapse;
+            margin: 1rem;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: left;
+        }
+    </style>
+    <script>
+        function toDec(event) {
+            event.preventDefault();
+            // Load inputs
+            let signed = $('#todec-signed').prop('checked');
+            let bitcount = $('#todec-bitcount').val();
+            let base = $('#todec-base').val();
+            let number = $('#todec-number').val().replaceAll(' ', '');
+
+            if (number.length > bitcount) {
+                alert('Zahl ist zu lang / Anzahl Zeichen zu klein!');
+                return;
+            }
+
+            number = ('0'.repeat(bitcount) + number).slice(-bitcount);
+
+            // Table format:
+            // Bit  7   6   5   4   3   2   1   0
+            // Exp  2^7 2^6 2^5 2^4 2^3 2^2 2^1 2^0
+            // Val  128 64  32  16  8   4   2   1
+            // Num  0   0   0   0   0   0   0   0
+            // Sum  0   0   0   0   0   0   0   0
+
+            // Generate table using jQuery and template strings
+            let result = 0;
+            let tbody = $("#todec-tbody");
+            tbody.empty();
+
+            let rowPosition = $('<tr><th>Position</th></tr>');
+            let rowExp = $('<tr><th>Exponent</th></tr>');
+            let rowVal = $('<tr><th>Wert</th></tr>');
+            let rowNum = $('<tr><th>Nummer</th></tr>');
+            let rowProduct = $('<tr><th>Produkt</th></tr>');
+
+            for (let i = bitcount - 1; i >= 0; i--) {
+                let hasSign = signed && i === bitcount - 1;
+                let sign = hasSign ? '-' : '';
+                let digit = parseInt(number[bitcount - i - 1], base);
+                let factor = Math.pow(base, i) * (hasSign ? -1 : 1);
+                let num = digit * factor;
+                result += num;
+
+                if (isNaN(digit)) {
+                    alert('Zahl enthält ungültige Zeichen!');
+                    return;
+                }
+
+                rowPosition.append(`<td>${i}</td>`);
+                rowExp.append(`<td>${sign}${base}<sup>${i}</sup></td>`);
+                rowVal.append(`<td>${factor}</td>`);
+                rowNum.append(`<td>${digit}</td>`);
+                rowProduct.append(`<td>${num || ""}</td>`);
+            }
+
+            tbody.append(rowPosition, rowExp, rowVal, rowNum, rowProduct);
+
+            // Display result
+            $('#todec-result').html(`<span>${number}<sub>${base}</sub> = ${result}<sub>10</sub></span>`);
+        }
+    </script>
+</head>
+
+<body>
+
+    <h1>Zahlensysteme umrechnen</h1>
+
+    <p>Sorry fürs Design, ist nur ein kleines Experiment ;)</p>
+
+    <h2>Ins Zehnersystem umrechnen</h2>
+
+    <form onsubmit="toDec(event)">
+        <label for="todec-number">Zahl: </label>
+        <input type="text" id="todec-number" pattern="[A-Za-z0-9 ]+">
+
+        <label for="todec-base">Basis: </label>
+        <select id="todec-base">
+            <optgroup label="Übliche Systeme">
+                <option value="2">2 (Binär)</option>
+                <option value="8">8 (Oktal)</option>
+                <option value="10">10 (Dezimal)</option>
+                <option value="16">16 (Hexadezimal)</option>
+            </optgroup>
+            <optgroup label="Andere Systeme">
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="9">9</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+                <option value="21">21</option>
+                <option value="22">22</option>
+                <option value="23">23</option>
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="26">26</option>
+                <option value="27">27</option>
+                <option value="28">28</option>
+                <option value="29">29</option>
+                <option value="30">30</option>
+                <option value="31">31</option>
+                <option value="32">32</option>
+            </optgroup>
+        </select>
+
+        <label for="todec-bitcount">Anzahl Zeichen: </label>
+        <input type="number" id="todec-bitcount" value="8" step="1" min="1">
+
+        <label for="todec-signed">Signiert? </label>
+        <input type="checkbox" id="todec-signed">
+
+        <input type="submit" value="Los!">
+    </form>
+
+    <table>
+        <tbody id="todec-tbody">
+
+        </tbody>
+    </table>
+
+    <div>Resultat: <b id="todec-result"></b></div>
+
+</body>
+
+</html>
