@@ -4,12 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Zahlensysteme</title>
 
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"
-        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <style>
         * {
             font-family: sans-serif;
@@ -87,76 +87,203 @@
             // Display result
             $('#todec-result').html(`<span>${number}<sub>${base}</sub> = ${result}<sub>10</sub></span>`);
         }
+
+        function fromDec(event) {
+            event.preventDefault();
+
+            let number = parseInt($('#fromdec-number').val());
+            let base = parseInt($('#fromdec-base').val());
+            // let signed = $('#fromdec-signed').prop('checked');
+            // let bitcount = $('#fromdec-bitcount').val();
+
+            // let hasSign = number < 0;
+
+            // Checks
+            // if (hasSign && !signed) {
+            //     alert('Negative Zahl, aber ohne Vorzeichen?!');
+            //     return;
+            // } else if (!signed && number > Math.pow(base, bitcount) - 1) {
+            //     alert('Zahl ist zu gross!');
+            //     return;
+            // } else if (signed && Math.abs(number) > Math.pow(base, bitcount - 1)) {
+            //     alert('Zahl ist zu gross!');
+            //     return;
+            // }
+
+            // Table format:
+            // Position Number   n % base    n // base
+
+            // Generate table using jQuery and template strings
+            let resultArray = [];
+            let tbody = $("#fromdec-tbody");
+            tbody.empty();
+
+            // Header
+            let rowHeader = $('<tr><th>Pos</th><th>n</th><th>n % b</th><th>n // b</th></tr>');
+            tbody.append(rowHeader);
+
+            let currNum = Math.abs(number);
+            while (currNum > 0) {
+                let rest = currNum % base;
+                let quotient = Math.floor(currNum / base);
+
+                let row = $(`<tr><td>${resultArray.length}</td><td>${currNum}</td><td>${rest}</td><td>${quotient}</td></tr>`);
+
+                resultArray.unshift(rest);
+                tbody.append(row);
+                currNum = quotient;
+            }
+
+            // Display result
+
+            let strResult = resultArray.map((digit) => {
+                return digit.toString(base).toUpperCase();
+            }).join('');
+
+            $('#fromdec-result').html(`<span>${number}<sub>10</sub> = ${strResult}<sub>${base}</sub></span>`);
+        }
     </script>
 </head>
 
 <body>
 
-    <h1>Zahlensysteme umrechnen</h1>
+<h1>Zahlensysteme umrechnen</h1>
 
-    <p>Sorry fürs Design, ist nur ein kleines Experiment ;)</p>
+<p>Sorry fürs Design, ist nur ein kleines Experiment ;)</p>
 
-    <h2>Ins Zehnersystem umrechnen</h2>
+<h2>Ins Zehnersystem umrechnen</h2>
+<p>Die Eingabe unterstützt signierte und unsignierte <b>Integer</b> in allen Systemen von 2 bis 36.</p>
 
-    <form onsubmit="toDec(event)">
-        <label for="todec-number">Zahl: </label>
-        <input type="text" id="todec-number" pattern="[A-Za-z0-9 ]+">
+<form onsubmit="toDec(event)">
+    <label for="todec-number">
+        <abbr title="Unterstützte Zeichen: A-Za-z0-9 und Leerzeichen">Zahl</abbr><sub>b</sub>:
+    </label>
+    <input type="text" id="todec-number" pattern="[A-Za-z0-9 ]+">
 
-        <label for="todec-base">Basis: </label>
-        <select id="todec-base">
-            <optgroup label="Übliche Systeme">
-                <option value="2">2 (Binär)</option>
-                <option value="8">8 (Oktal)</option>
-                <option value="10">10 (Dezimal)</option>
-                <option value="16">16 (Hexadezimal)</option>
-            </optgroup>
-            <optgroup label="Andere Systeme">
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="9">9</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-                <option value="13">13</option>
-                <option value="14">14</option>
-                <option value="15">15</option>
-                <option value="17">17</option>
-                <option value="18">18</option>
-                <option value="19">19</option>
-                <option value="20">20</option>
-                <option value="21">21</option>
-                <option value="22">22</option>
-                <option value="23">23</option>
-                <option value="24">24</option>
-                <option value="25">25</option>
-                <option value="26">26</option>
-                <option value="27">27</option>
-                <option value="28">28</option>
-                <option value="29">29</option>
-                <option value="30">30</option>
-                <option value="31">31</option>
-                <option value="32">32</option>
-            </optgroup>
-        </select>
+    <label for="todec-base">Basis: </label>
+    <select id="todec-base">
+        <optgroup label="Übliche Systeme">
+            <option value="2">2 (Binär)</option>
+            <option value="8">8 (Oktal)</option>
+            <option value="16">16 (Hexadezimal)</option>
+        </optgroup>
+        <optgroup label="Zielsystem">
+            <option value="10">10 (Dezimal)</option>
+        </optgroup>
+        <optgroup label="Andere Systeme">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="9">9</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+            <option value="32">32</option>
+        </optgroup>
+    </select>
 
-        <label for="todec-bitcount">Anzahl Zeichen: </label>
-        <input type="number" id="todec-bitcount" value="8" step="1" min="1">
+    <label for="todec-bitcount"><abbr title="Relevant für signierte Zahlen">Anzahl Zeichen</abbr>: </label>
+    <input type="number" id="todec-bitcount" value="8" step="1" min="1">
 
-        <label for="todec-signed">Signiert? </label>
-        <input type="checkbox" id="todec-signed">
+    <label for="todec-signed">Signiert? </label>
+    <input type="checkbox" id="todec-signed">
 
-        <input type="submit" value="Los!">
-    </form>
+    <input type="submit" value="Los!">
+</form>
 
-    <table>
-        <tbody id="todec-tbody">
+<table>
+    <tbody id="todec-tbody">
 
-        </tbody>
-    </table>
+    </tbody>
+</table>
 
-    <div>Resultat: <b id="todec-result"></b></div>
+<div>Resultat: <b id="todec-result"></b></div>
+
+<h2>Vom Zehnersystem umrechnen</h2>
+<p>Die Eingabe unterstützt positive <b>Integer</b> im Dezimalsystem.</p>
+
+<form onsubmit="fromDec(event)">
+    <label for="fromdec-number">Zahl<sub>10</sub>: </label>
+    <input type="number" id="fromdec-number" value="0" step="1" min="0">
+
+    <span>→</span>
+
+    <label for="fromdec-base">Ziel-Basis: </label>
+    <select id="fromdec-base">
+        <optgroup label="Übliche Systeme">
+            <option value="2">2 (Binär)</option>
+            <option value="8">8 (Oktal)</option>
+            <option value="16">16 (Hexadezimal)</option>
+        </optgroup>
+        <optgroup label="Ursprungssystem">
+            <option value="10">10 (Dezimal)</option>
+        </optgroup>
+        <optgroup label="Andere Systeme">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="9">9</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">24</option>
+            <option value="25">25</option>
+            <option value="26">26</option>
+            <option value="27">27</option>
+            <option value="28">28</option>
+            <option value="29">29</option>
+            <option value="30">30</option>
+            <option value="31">31</option>
+            <option value="32">32</option>
+        </optgroup>
+    </select>
+
+<!--    <label for="fromdec-bitcount">Anzahl Bits: </label>-->
+<!--    <input type="number" id="fromdec-bitcount">-->
+
+<!--    <label for="fromdec-signed">Signiert? </label>-->
+<!--    <input type="checkbox" id="fromdec-signed">-->
+
+    <input type="submit" value="Los!">
+</form>
+
+<table>
+    <tbody id="fromdec-tbody">
+
+    </tbody>
+</table>
+
+<div>Resultat: <b id="fromdec-result"></b></div>
 
 </body>
 
