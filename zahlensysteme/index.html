@@ -32,6 +32,19 @@
             background-color: #ff000030;
         }
 
+        td span.rest-container,
+        td span.quotient-container {
+            display: flex;
+            justify-content: space-between;
+            
+        }
+
+        td span.quotient-container i:first-child,
+        td span.rest-container i:first-child {
+            color: #00000060;
+            margin-right: .4rem;
+        }
+
         .hidden {
             display: none;
         }
@@ -179,7 +192,12 @@
                 let rest = currNum % base;
                 let quotient = Math.floor(currNum / base);
 
-                let row = $(`<tr><td>${resultArray.length}</td><td>${currNum}</td><td>${quotient}</td><td>${rest}</td></tr>`);
+                let row = $(`<tr>
+                        <td class="right">${resultArray.length}</td>
+                        <td class="right">${currNum}</td>
+                        <td><span class="quotient-container"><i>÷ ${base} =</i><span>${quotient}</span></span></td>
+                        <td><span class="rest-container"><i>R</i><span>${rest}</span></span></td>
+                </tr>`);
 
                 resultArray.unshift(rest);
                 tbody.append(row);
@@ -296,7 +314,7 @@
 
 <div id="todec-tempresult"></div>
 
-<div>Resultat: <b id="todec-result"></b></div>
+<div>Resultat: <b id="todec-result">Gib etwas ein und klicke "Los!"</b></div>
 
 <h2>Vom Zehnersystem umrechnen</h2>
 <p>Die Eingabe unterstützt positive <b>Integer</b> im Dezimalsystem. Für die Umrechnung in binär sind auch negative
@@ -368,7 +386,7 @@
 
 <div id="fromdec-tempresult"></div>
 
-<div>Resultat: <b id="fromdec-result"></b></div>
+<div>Resultat: <b id="fromdec-result">Gib etwas ein und klicke "Los!"</b></div>
 
 </body>
 
