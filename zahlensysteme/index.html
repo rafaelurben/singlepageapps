@@ -35,6 +35,14 @@
         .hidden {
             display: none;
         }
+
+        .result {
+            color: green;
+        }
+
+        .right {
+            text-align: right;
+        }
     </style>
     <script>
         function _binarySignChange(strNum) {
@@ -85,7 +93,7 @@
             // Sum  0   0   0   0   0   0   0   0
 
             // Generate table using jQuery and template strings
-            let result = 0;
+            let values = [];
             let tbody = $("#todec-tbody");
             tbody.empty();
             tbody.toggleClass('signed', signed);
@@ -102,7 +110,10 @@
                 let digit = parseInt(number[bitcount - i - 1], base);
                 let factor = Math.pow(base, i) * (hasSign ? -1 : 1);
                 let num = digit * factor;
-                result += num;
+
+                if (num !== 0) {
+                    values.push(num)
+                };
 
                 if (isNaN(digit)) {
                     alert('Zahl enthält ungültige Zeichen!');
@@ -118,8 +129,11 @@
 
             tbody.append(rowPosition, rowExp, rowVal, rowNum, rowProduct);
 
+            let result = values.reduce((a, b) => a + b, 0);
+            $('#todec-tempresult').html(`Summe: ${values.join(' + ')} = ${result}`);
+
             // Display result
-            $('#todec-result').html(`<span>${number}<sub>${base}${signed ? " (sig)" : ""}</sub> = ${result}<sub>10</sub></span>`);
+            $('#todec-result').html(`<span class="result">${number}<sub>${base}${signed ? ` (sig, ${bitcount})` : ""}</sub> = ${result}<sub>10</sub></span>`);
         }
 
         function updateToDec() {
@@ -190,7 +204,7 @@
                 $('#fromdec-tempresult').empty();
             }
 
-            $('#fromdec-result').html(`<span>${number}<sub>10</sub> = ${finalResult}<sub>${base}${signed ? " (sig)" : ""}</sub></span>`);
+            $('#fromdec-result').html(`<span class="result">${number}<sub>10</sub> = ${finalResult}<sub>${base}${signed ? ` (sig, ${bitcount})` : ""}</sub></span>`);
         }
 
         function updateFromDec() {
@@ -214,7 +228,7 @@
 <p>Sorry fürs Design, ist nur ein kleines Experiment ;)</p>
 
 <h2>Ins Zehnersystem umrechnen</h2>
-<p>Die Eingabe unterstützt unsignierte <b>Integer</b> in allen Systemen von 2 bis 36. Im binären System werden auch
+<p>Die Eingabe unterstützt <b>Integer</b> in allen Systemen von 2 bis 36. Im binären System werden auch
     signierte Zahlen unterstützt.</p>
 
 <form onsubmit="toDec(event)">
@@ -279,6 +293,8 @@
 
     </tbody>
 </table>
+
+<div id="todec-tempresult"></div>
 
 <div>Resultat: <b id="todec-result"></b></div>
 
