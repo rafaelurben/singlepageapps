@@ -24,8 +24,12 @@
         th,
         td {
             border: 1px solid black;
-            padding: 5px;
+            padding: .4rem .6rem;
             text-align: left;
+        }
+
+        tbody.signed tr td:nth-child(2) {
+            background-color: #ff000030;
         }
 
         .hidden {
@@ -84,6 +88,7 @@
             let result = 0;
             let tbody = $("#todec-tbody");
             tbody.empty();
+            tbody.toggleClass('signed', signed);
 
             let rowPosition = $('<tr><th>Position</th></tr>');
             let rowExp = $('<tr><th>Exponent</th></tr>');
@@ -119,7 +124,9 @@
 
         function updateToDec() {
             let isBinary = $('#todec-base').val() === '2';
+            let isSigned = $('#todec-signed').prop('checked');
             $('.todec-2only').toggleClass("hidden", !isBinary);
+            $('.todec-signedonly').toggleClass("hidden", !(isBinary && isSigned));
         }
 
         function fromDec(event) {
@@ -188,7 +195,9 @@
 
         function updateFromDec() {
             let isBinary = $('#fromdec-base').val() === '2';
+            let isSigned = $('#fromdec-signed').prop('checked');
             $('.fromdec-2only').toggleClass("hidden", !isBinary);
+            $('.fromdec-signedonly').toggleClass("hidden", !(isBinary && isSigned));
         }
 
         window.addEventListener("DOMContentLoaded", () => {
@@ -256,11 +265,11 @@
     </select>
 
     <label class="todec-2only" for="todec-signed">Signiert? </label>
-    <input class="todec-2only" type="checkbox" id="todec-signed">
+    <input class="todec-2only" type="checkbox" id="todec-signed" onchange="updateToDec()">
 
-    <label class="todec-2only" for="todec-bitcount"><abbr title="Nur relevant für signierte Zahlen">Anzahl Bits</abbr>:
+    <label class="todec-2only todec-signedonly" for="todec-bitcount"><abbr title="Nur relevant für signierte Zahlen">Anzahl Bits</abbr>:
     </label>
-    <input class="todec-2only" type="number" id="todec-bitcount" value="8" step="1" min="1">
+    <input class="todec-2only todec-signedonly" type="number" id="todec-bitcount" value="8" step="1" min="1">
 
     <input type="submit" value="Los!">
 </form>
@@ -325,12 +334,12 @@
     </select>
 
     <label class="fromdec-2only" for="fromdec-signed">Signiert? </label>
-    <input class="fromdec-2only" type="checkbox" id="fromdec-signed">
+    <input class="fromdec-2only" type="checkbox" id="fromdec-signed" onchange="updateFromDec()">
 
-    <label class="fromdec-2only" for="fromdec-bitcount">
+    <label class="fromdec-2only fromdec-signedonly" for="fromdec-bitcount">
         <abbr title="Nur relevant für signierte Zahlen">Anzahl Bits</abbr>:
     </label>
-    <input class="fromdec-2only" type="number" id="fromdec-bitcount">
+    <input class="fromdec-2only fromdec-signedonly" type="number" id="fromdec-bitcount">
 
     <input type="submit" value="Los!">
 </form>
