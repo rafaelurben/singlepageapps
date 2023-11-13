@@ -84,14 +84,14 @@
         function toDec(event) {
             event.preventDefault();
             // Load inputs
-            let number = $('#todec-number').val().replaceAll(' ', '');
+            let number = $('#todec-number').val().replaceAll(' ', '') || '0';
             let base = parseInt($('#todec-base').val());
             let signed = $('#todec-signed').prop('checked') && base === 2;
-            let bitcount = signed ? parseInt($('#todec-bitcount').val()) : number.length
+            let bitcount = signed ? parseInt($('#todec-bitcount').val()) : number.length;
 
             if (base === 2) {
                 if (number.length > bitcount) {
-                    alert('Zahl ist zu lang / Anzahl Zeichen zu klein!');
+                    alert('Zahl ist zu lang / Anzahl Bits zu klein!');
                     return;
                 }
 
@@ -102,7 +102,7 @@
             // Bit  7   6   5   4   3   2   1   0
             // Exp  2^7 2^6 2^5 2^4 2^3 2^2 2^1 2^0
             // Val  128 64  32  16  8   4   2   1
-            // Num  0   0   0   0   0   0   0   0
+            // Dig  0   0   0   0   0   0   0   0
             // Sum  0   0   0   0   0   0   0   0
 
             // Generate table using jQuery and template strings
@@ -114,7 +114,7 @@
             let rowPosition = $('<tr><th>Position</th></tr>');
             let rowExp = $('<tr><th>Exponent</th></tr>');
             let rowVal = $('<tr><th>Wert</th></tr>');
-            let rowNum = $('<tr><th>Nummer</th></tr>');
+            let rowDigit = $('<tr><th>Ziffer</th></tr>');
             let rowProduct = $('<tr><th>Produkt</th></tr>');
 
             for (let i = bitcount - 1; i >= 0; i--) {
@@ -136,11 +136,11 @@
                 rowPosition.append(`<td>${i}</td>`);
                 rowExp.append(`<td>${sign}${base}<sup>${i}</sup></td>`);
                 rowVal.append(`<td>${factor}</td>`);
-                rowNum.append(`<td>${digit}</td>`);
+                rowDigit.append(`<td>${digit >= 10 ? `${digit.toString(base).toUpperCase()} (${digit})` : digit}</td>`);
                 rowProduct.append(`<td>${num || ""}</td>`);
             }
 
-            tbody.append(rowPosition, rowExp, rowVal, rowNum, rowProduct);
+            tbody.append(rowPosition, rowExp, rowVal, rowDigit, rowProduct);
 
             let result = values.reduce((a, b) => a + b, 0);
             $('#todec-tempresult').html(`Summe: ${values.join(' + ')} = ${result}`);
@@ -170,7 +170,7 @@
             if (hasSign && !signed) {
                 alert('Unsignierte negative Zahl?! NOPE!');
                 return;
-            } else if (signed && Math.abs(number) > Math.pow(base, bitcount - 1)) {
+            } else if (signed && (number > Math.pow(base, bitcount - 1) - 1 || number < -Math.pow(base, bitcount - 1))) {
                 alert('Zahl ist zu gross!');
                 return;
             }
@@ -209,7 +209,7 @@
             let tempResult = resultArray.map((digit) => {
                 return digit.toString(base).toUpperCase();
             }).join('');
-            if (base === 2) {
+            if (signed) {
                 tempResult = ('0'.repeat(bitcount) + tempResult).slice(-bitcount);
             }
             let finalResult;
@@ -299,8 +299,7 @@
     <label class="todec-2only" for="todec-signed">Signiert? </label>
     <input class="todec-2only" type="checkbox" id="todec-signed" onchange="updateToDec()">
 
-    <label class="todec-2only todec-signedonly" for="todec-bitcount"><abbr title="Nur relevant für signierte Zahlen">Anzahl Bits</abbr>:
-    </label>
+    <label class="todec-2only todec-signedonly" for="todec-bitcount">Anzahl Bits:</label>
     <input class="todec-2only todec-signedonly" type="number" id="todec-bitcount" value="8" step="1" min="1">
 
     <input type="submit" value="Los!">
@@ -370,9 +369,7 @@
     <label class="fromdec-2only" for="fromdec-signed">Signiert? </label>
     <input class="fromdec-2only" type="checkbox" id="fromdec-signed" onchange="updateFromDec()">
 
-    <label class="fromdec-2only fromdec-signedonly" for="fromdec-bitcount">
-        <abbr title="Nur relevant für signierte Zahlen">Anzahl Bits</abbr>:
-    </label>
+    <label class="fromdec-2only fromdec-signedonly" for="fromdec-bitcount">Anzahl Bits:</label>
     <input class="fromdec-2only fromdec-signedonly" type="number" id="fromdec-bitcount">
 
     <input type="submit" value="Los!">
