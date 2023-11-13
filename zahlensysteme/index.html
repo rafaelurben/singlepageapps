@@ -190,6 +190,11 @@
             let isBinary = $('#fromdec-base').val() === '2';
             $('.fromdec-2only').toggleClass("hidden", !isBinary);
         }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            updateFromDec();
+            updateToDec();
+        })
     </script>
 </head>
 
