@@ -46,7 +46,7 @@
 
         table {
             border-collapse: collapse;
-            margin: 1rem;
+            margin: 1rem 0.5rem;
         }
 
         table,
@@ -86,8 +86,16 @@
             text-align: right;
         }
 
+        .center {
+            text-align: center;
+        }
+
         .arrow-span {
             margin: 0 1rem;
+        }
+
+        .grayed {
+            color: #00000040;
         }
     </style>
     <script>
@@ -99,24 +107,28 @@
             return `[0-9A-${char.toUpperCase()}a-${char.toLowerCase()} ]+`;
         }
 
-        function _groupBeautify(strNum, groupSize = 4, pad = true) {
+        function _groupBeautify(strNum, groupSize = 4, pad = true, separator = '_') {
             let result = '';
             let groupCount = Math.ceil(strNum.length / groupSize);
-            if (pad) {
+            if (pad && strNum.length % groupSize !== 0) {
                 strNum = "0".repeat(groupSize - strNum.length % groupSize) + strNum; // Pad with "0"
             }
 
-            for (let i = 0; i < groupCount; i++) {
-                let group = strNum.slice(-groupSize);
-                strNum = strNum.slice(0, -groupSize);
-                if (i === 0) {
-                    result = group;
-                } else {
-                    result = group + '_' + result;
+            if (separator) {
+                for (let i = 0; i < groupCount; i++) {
+                    let group = strNum.slice(-groupSize);
+                    strNum = strNum.slice(0, -groupSize);
+                    if (i === 0) {
+                        result = group;
+                    } else {
+                        result = group + separator + result;
+                    }
                 }
+            } else {
+                result = strNum;
             }
 
-            return result.trim();
+            return result;
         }
 
         function _binarySignChange(strNum) {
@@ -282,16 +294,14 @@
             let finalResult;
 
             if (signed && hasSign) {
-                finalResult = _binarySignChange(tempResult);
+                finalResult = _groupBeautify(_binarySignChange(tempResult), 4, false);
+                tempResult = _groupBeautify(tempResult, 4, false);
                 $('#fromdec-tempresult').html(`Umkehrung: +${Math.abs(number)}<sub>10</sub> = ${tempResult}<sub>${base}</sub> → ~n+1 → ${finalResult}<sub>${base}</sub>`);
             } else {
-                finalResult = tempResult;
+                finalResult = base === 2 ? _groupBeautify(tempResult, 4, true) : tempResult;
                 $('#fromdec-tempresult').empty();
             }
 
-            if (base === 2) {
-                finalResult = _groupBeautify(finalResult, 4, !signed);
-            }
             $('#fromdec-result').html(`<span class="result">${number}<sub>10</sub> = ${finalResult}<sub>${base}${signed ? ` (sig, ${bitcount})` : ""}</sub></span>`);
         }
 
@@ -302,9 +312,51 @@
             $('.fromdec-signedonly').toggleClass("hidden", !(isBinary && isSigned));
         }
 
+        function bin2oct2hex(event) {
+            event.preventDefault();
+
+            const MAX_EXP = 4;
+            const PAD = 12; // smallest common multiple of 1,2,...,MAX_EXP
+
+            let numStr = $('#binocthex-number').val().replaceAll(' ', '') || '0';
+            let base = parseInt($('#binocthex-base').val());
+            let num = parseInt(numStr, base);
+
+            let $tbody = $('#binocthex-tbody');
+            $tbody.empty();
+
+            let $indexRow = $('<tr><th colspan="2">Index</th></tr>');
+            let num2 = _groupBeautify(num.toString(2), PAD, true, "");
+            for (let i = num2.length - 1; i >= 0; i--) {
+                $indexRow.append(`<th>${i}</th>`);
+            }
+            $tbody.append($indexRow);
+
+            for (let i = 1; i <= MAX_EXP; i++) {
+                let expVal = Math.pow(2, i);
+                let currNumStr = _groupBeautify(num.toString(expVal).toUpperCase(), PAD/i, true, "");
+
+                let isZeroPad = true;
+                let $currRow = $(`<tr></tr>`);
+                for (let char of currNumStr) {
+                    if (char !== '0') isZeroPad = false;
+                    $currRow.append(`<td colspan="${i}" class="center${isZeroPad ? " grayed": ""}">${char}</td>`);
+                }
+                $currRow.prepend(`<th>2<sup>${i}</sup></th><th class="right">${expVal}</th>`);
+                $tbody.append($currRow);
+            }
+        }
+
+        function updateBinOctHex() {
+            let base = $('#binocthex-base').val();
+            $("#binocthex-base-display").text(base);
+            $("#binocthex-number").attr("pattern", _getPattern(base));
+        }
+
         window.addEventListener("DOMContentLoaded", () => {
             updateFromDec();
             updateToDec();
+            updateBinOctHex();
         })
     </script>
 </head>
@@ -463,6 +515,67 @@
     <div id="fromdec-tempresult"></div>
 
     <div>Resultat: <b id="fromdec-result">Gib etwas ein und klicke "Los!"</b></div>
+</fieldset>
+
+<h2>Bin-Oct-Hex</h2>
+<p>Die einfache Umrechnung mithilfe der Binärdarstellung verstehen. Nur positive Zahlen.</p>
+
+<fieldset>
+    <legend>Zahlen in Zweierpotenz-Basen darstellen</legend>
+
+    <form onsubmit="bin2oct2hex(event)">
+        <label for="binocthex-number">Zahl<sub id="binocthex-base-display">b</sub>:</label>
+        <input type="text" id="binocthex-number" pattern="[A-Za-z0-9 ]+">
+
+        <select id="binocthex-base" onchange="updateBinOctHex()" aria-label="Basis">
+            <optgroup label="Übliche Systeme">
+                <option value="2">2 (Binär)</option>
+                <option value="8">8 (Octal)</option>
+                <option value="10" selected>10 (Dezimal)</option>
+                <option value="16">16 (Hexadezimal)</option>
+            </optgroup>
+            <optgroup label="Andere Systeme">
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="9">9</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="17">17</option>
+                <option value="18">18</option>
+                <option value="19">19</option>
+                <option value="20">20</option>
+                <option value="21">21</option>
+                <option value="22">22</option>
+                <option value="23">23</option>
+                <option value="24">24</option>
+                <option value="25">25</option>
+                <option value="26">26</option>
+                <option value="27">27</option>
+                <option value="28">28</option>
+                <option value="29">29</option>
+                <option value="30">30</option>
+                <option value="31">31</option>
+                <option value="32">32</option>
+                <option value="33">33</option>
+                <option value="34">34</option>
+                <option value="35">35</option>
+                <option value="36">36</option>
+            </optgroup>
+        </select>
+
+        <input type="submit" value="Los!">
+    </form>
+
+    <table>
+        <tbody id="binocthex-tbody">
+        </tbody>
+    </table>
 </fieldset>
 
 </body>
