@@ -74,11 +74,11 @@
             margin-right: .4rem;
         }
 
-        #binocthex-tbody tr:nth-child(1) th:nth-last-of-type(8n),
-        #binocthex-tbody tr:nth-child(2) td:nth-last-of-type(8n),
-        #binocthex-tbody tr:nth-child(3) td:nth-last-of-type(4n),
-        #binocthex-tbody tr:nth-child(4) td:nth-last-of-type(8n),
-        #binocthex-tbody tr:nth-child(5) td:nth-last-of-type(2n) {
+        #binocthex-tbody tr:nth-child(1) th:nth-last-of-type(8n + 1),
+        #binocthex-tbody tr:nth-child(2) td:nth-last-of-type(8n + 1),
+        #binocthex-tbody tr:nth-child(3) td:nth-last-of-type(4n + 1),
+        #binocthex-tbody tr:nth-child(4) td:nth-last-of-type(8n + 1),
+        #binocthex-tbody tr:nth-child(5) td:nth-last-of-type(2n + 1) {
             border-left: 2px solid black;
         }
 
@@ -323,7 +323,7 @@
         function bin2oct2hex(event) {
             event.preventDefault();
 
-            const MAX_EXP = 4;
+            const MAX_EXP = 4; // 5 => 2^5 = 32 would be unusual to represent with letters
             const PAD = 12; // smallest common multiple of 1,2,...,MAX_EXP
 
             let numStr = $('#binocthex-number').val().replaceAll(' ', '') || '0';
@@ -333,24 +333,27 @@
             let $tbody = $('#binocthex-tbody');
             $tbody.empty();
 
-            let $indexRow = $('<tr><th colspan="2">Index</th></tr>');
+            let $indexRow = $('<tr><th colspan="2"><small><sub>Basis</sub>&bsol;<sup>Index</sup></small></th></tr>');
             let num2 = _groupBeautify(num.toString(2), PAD, true, "");
             for (let i = num2.length - 1; i >= 0; i--) {
                 $indexRow.append(`<th>${i}</th>`);
             }
+            $indexRow.append(`<th>Darstellung</th>`);
             $tbody.append($indexRow);
 
-            for (let i = 1; i <= MAX_EXP; i++) {
-                let expVal = Math.pow(2, i);
-                let currNumStr = _groupBeautify(num.toString(expVal).toUpperCase(), PAD/i, true, "");
+            for (let exp = 1; exp <= MAX_EXP; exp++) {
+                let expVal = Math.pow(2, exp);
+                let currNumStrRaw = num.toString(expVal).toUpperCase();
+                let currNumStr = _groupBeautify(currNumStrRaw, PAD/exp, true, "");
 
                 let isZeroPad = true;
                 let $currRow = $(`<tr></tr>`);
+                $currRow.append(`<th>2<sup>${exp}</sup> =</th><th class="right">${expVal}</th>`);
                 for (let char of currNumStr) {
                     if (char !== '0') isZeroPad = false;
-                    $currRow.append(`<td colspan="${i}" class="center${isZeroPad ? " grayed": ""}">${char}</td>`);
+                    $currRow.append(`<td colspan="${exp}" class="center${isZeroPad ? " grayed": ""}">${char}</td>`);
                 }
-                $currRow.prepend(`<th>2<sup>${i}</sup></th><th class="right">${expVal}</th>`);
+                $currRow.append(`<td class="right">${currNumStrRaw}<sub>${expVal}</sub></td>`);
                 $tbody.append($currRow);
             }
         }
