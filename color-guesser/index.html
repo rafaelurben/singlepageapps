@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Color guesser by Rafael Urben</title>
+    <link rel="stylesheet" href="color-guesser.css">
+    <meta name="viewport" content="width=device-width,initial-scale=0.8"/>
+    <meta name="description" content="Guess what color matches the displayed RGB value."/>
+</head>
+<body>
+<header>
+    <div id="header-color-container"></div>
+    <nav id="header-controls-container">
+        <ul id="controls" class="difficulties_shown">
+            <li class="clickable" id="toggle-difficulties">Toggle Difficulties</li>
+            <li class="clickable difficulty-select selected" data-difficulty="0">Easy</li>
+            <li class="clickable difficulty-select" data-difficulty="1">Normal</li>
+            <li class="clickable difficulty-select" data-difficulty="2">Medium</li>
+            <li class="clickable difficulty-select" data-difficulty="3">Hard</li>
+            <li class="clickable difficulty-select" data-difficulty="4">God</li>
+            <li class="clickable difficulty-select" data-difficulty="5">Impossible</li>
+            <li class="clickable ms-auto" id="btn-next">Next</li>
+            <li>Score: <span id="score">0</span></li>
+        </ul>
+    </nav>
+</header>
+<main>
+    <div id="colors-container">
+
+    </div>
+</main>
+
+<script src="color-guesser.js"></script>
+</body>
+</html>
